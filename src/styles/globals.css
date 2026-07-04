@@ -1,0 +1,9 @@
+@import './variables.css';
+@import './themes.css';
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
