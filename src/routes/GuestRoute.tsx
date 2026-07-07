@@ -1,5 +1,16 @@
-import React from 'react';
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
-export const GuestRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <>{children}</>;
-};
+interface GuestRouteProps {
+  children: React.ReactNode
+}
+
+export function GuestRoute({ children }: GuestRouteProps) {
+  const { isAuthenticated } = useAuth()
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <>{children}</>
+}

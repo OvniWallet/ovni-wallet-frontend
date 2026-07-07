@@ -1,54 +1,12 @@
-import { useState } from 'react'
-import { authService } from '../services/auth.service'
-import type {
-  LoginRequest,
-  RegisterRequest,
-  User,
-} from '../types'
+import { useContext } from 'react'
+import { AuthContext } from '@/contexts/AuthContext'
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(false)
+  const context = useContext(AuthContext)
 
-  const login = async (credentials: LoginRequest) => {
-    setLoading(true)
-
-    try {
-      const response = await authService.login(credentials)
-
-      localStorage.setItem('access_token', response.access_token)
-      localStorage.setItem('refresh_token', response.refresh_token)
-
-      return response
-    } finally {
-      setLoading(false)
-    }
+  if (!context) {
+    throw new Error('useAuth debe usarse dentro de AuthProvider')
   }
 
-  const register = async (data: RegisterRequest) => {
-    setLoading(true)
-
-    try {
-      return await authService.register(data)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const logout = async () => {
-    await authService.logout()
-
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-
-    setUser(null)
-  }
-
-  return {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-  }
+  return context
 }
