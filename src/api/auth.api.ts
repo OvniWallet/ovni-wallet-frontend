@@ -1,4 +1,3 @@
-import { httpClient } from './httpClient'
 import type {
   LoginRequest,
   LoginResponse,
@@ -6,40 +5,51 @@ import type {
   RegisterResponse,
 } from '@/features/auth/types'
 
-interface ApiResponse<T> {
-  status: 'success'
-  data: T
-}
-
 export const authApi = {
   register: async (payload: RegisterRequest): Promise<RegisterResponse> => {
-    const response = await httpClient.post<ApiResponse<RegisterResponse>>(
-      '/auth/register',
-      payload,
-    )
+    // Simulamos retraso de red
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    return response.data.data
+    return {
+      token: 'fake-jwt-token-ovniwallet',
+      refresh_token: 'fake-refresh-token-ovniwallet',
+      user: {
+        id: 'user-mock-123',
+        email: payload.email,
+        name: 'Usuario Mock',
+      },
+    } as unknown as RegisterResponse
   },
 
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await httpClient.post<ApiResponse<LoginResponse>>(
-      '/auth/login',
-      credentials,
-    )
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    return response.data.data
+    return {
+      token: 'fake-jwt-token-ovniwallet',
+      refresh_token: 'fake-refresh-token-ovniwallet',
+      user: {
+        id: 'user-mock-123',
+        email: credentials.email,
+        name: 'Santiago Dev',
+      },
+    } as unknown as LoginResponse
   },
 
   refresh: async (refreshToken: string): Promise<LoginResponse> => {
-    const response = await httpClient.post<ApiResponse<LoginResponse>>(
-      '/auth/refresh',
-      { refresh_token: refreshToken },
-    )
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    return response.data.data
+    return {
+      token: 'fake-jwt-token-ovniwallet',
+      refresh_token: refreshToken,
+      user: {
+        id: 'user-mock-123',
+        email: 'santiago@ovni.com',
+        name: 'Santiago Dev',
+      },
+    } as unknown as LoginResponse
   },
 
   logout: async (): Promise<void> => {
-    await httpClient.post('/auth/logout')
+    await new Promise((resolve) => setTimeout(resolve, 200))
   },
 }
