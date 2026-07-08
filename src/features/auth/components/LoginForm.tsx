@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+
 
 export function LoginForm() {
   const navigate = useNavigate()
@@ -54,6 +55,9 @@ export function LoginForm() {
       <button type="submit" disabled={loading}>
         {loading ? 'Ingresando...' : 'Ingresar'}
       </button>
+      <p>
+        ¿No tienes una cuenta? <Link to="/register">Crear cuenta</Link>
+     </p>
     </form>
   )
 }

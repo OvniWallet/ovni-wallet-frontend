@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 export function RegisterForm() {
@@ -99,6 +99,10 @@ export function RegisterForm() {
       <button type="submit" disabled={loading}>
         {loading ? 'Creando cuenta...' : 'Registrarme'}
       </button>
+
+      <p>
+        ¿Ya tienes una cuenta? <Link to="/login">Iniciar sesión</Link>
+      </p>
     </form>
   )
 }
