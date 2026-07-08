@@ -1,5 +1,12 @@
-import React from 'react';
+import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
-export const GuestRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <>{children}</>;
-};
+export function GuestRoute() {
+  const { isAuthenticated } = useAuth()
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <Outlet />
+}
