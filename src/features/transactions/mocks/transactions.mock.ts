@@ -30,14 +30,39 @@ const initialTransactions: Transaction[] = [
   },
 ]
 
-if (!localStorage.getItem('ovni_transactions')) {
-  localStorage.setItem('ovni_transactions', JSON.stringify(initialTransactions))
+// Forzamos un identificador de sesión único en la ventana para separar usuarios si falla el storage
+if (!(window as any).__ovniUserKey) {
+  try {
+    const userSession = localStorage.getItem('user') || localStorage.getItem('auth_user');
+    if (userSession) {
+      const user = JSON.parse(userSession);
+      (window as any).__ovniUserKey = user.email || user.id || 'default';
+    } else {
+      (window as any).__ovniUserKey = `guest_${Math.random().toString(36).substring(2, 7)}`;
+    }
+  } catch {
+    (window as any).__ovniUserKey = 'guest_fallback';
+  }
+}
+
+const getStorageKey = (): string => {
+  return `ovni_transactions_${(window as any).__ovniUserKey}`;
 }
 
 export const getMockTransactions = (): Transaction[] => {
-  const data = localStorage.getItem('ovni_transactions')
-  return data ? JSON.parse(data) : initialTransactions
-}
+  const storageKey = getStorageKey();
+  const data = localStorage.getItem(storageKey);
+  
+  if (!data) {
+    localStorage.setItem(storageKey, JSON.stringify(initialTransactions));
+    return initialTransactions;
+  }
+  
+  return JSON.parse(data);
+};
 
-// Mantener la exportación original para evitar errores en otras vistas
-export const transactions: Transaction[] = getMockTransactions()
+export const getLatestTransactions = (): Transaction[] => {
+  return getMockTransactions();
+};
+
+export const transactions: Transaction[] = getMockTransactions();
