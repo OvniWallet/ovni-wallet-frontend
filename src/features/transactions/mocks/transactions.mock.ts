@@ -30,17 +30,23 @@ const initialTransactions: Transaction[] = [
   },
 ]
 
-const getStorageKey = (): string => {
+// Forzamos un identificador de sesión único en la ventana para separar usuarios si falla el storage
+if (!(window as any).__ovniUserKey) {
   try {
-    const userSession = localStorage.getItem('user'); 
+    const userSession = localStorage.getItem('user') || localStorage.getItem('auth_user');
     if (userSession) {
       const user = JSON.parse(userSession);
-      return `ovni_transactions_${user.email || user.id || 'default'}`;
+      (window as any).__ovniUserKey = user.email || user.id || 'default';
+    } else {
+      (window as any).__ovniUserKey = `guest_${Math.random().toString(36).substring(2, 7)}`;
     }
-  } catch (e) {
-    console.error(e);
+  } catch {
+    (window as any).__ovniUserKey = 'guest_fallback';
   }
-  return 'ovni_transactions_guest';
+}
+
+const getStorageKey = (): string => {
+  return `ovni_transactions_${(window as any).__ovniUserKey}`;
 }
 
 export const getMockTransactions = (): Transaction[] => {
@@ -53,13 +59,10 @@ export const getMockTransactions = (): Transaction[] => {
   }
   
   return JSON.parse(data);
-}
-
+};
 
 export const getLatestTransactions = (): Transaction[] => {
   return getMockTransactions();
 };
 
-// Dejamos la exportación vieja por compatibilidad si se usa en otros lados,
-// pero internamente llamará a la función dinámica.
 export const transactions: Transaction[] = getMockTransactions();
