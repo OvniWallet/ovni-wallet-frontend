@@ -11,39 +11,54 @@ export function P2PPage() {
   const [success, setSuccess] = useState(false)
 
   const handleTransfer = async (e: FormEvent) => {
-  e.preventDefault()
-  if (!email || !amount) return
+    e.preventDefault()
+    if (!email || !amount) return
 
-  setLoading(true)
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  setLoading(false)
+    setLoading(true)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    setLoading(false)
 
-  try {
-    const currentData = localStorage.getItem('ovni_transactions')
-    const list = currentData ? JSON.parse(currentData) : []
-    
-    // Objeto estructurado idéntico a la interfaz de tu compañero
-    const newTransfer = {
-      id: `tx-${Date.now()}`,
-      type: 'P2P_TRANSFER',
-      status: 'COMPLETED',
-      amount: parseFloat(amount),
-      currency: currency,
-      description: `Transferencia enviada a ${email}`,
-      createdAt: new Date().toISOString(),
+    try {
+      // 1. Obtener de forma dinámica el identificador del usuario logueado actualmente
+      const userSession = localStorage.getItem('user')
+      let storageKey = 'ovni_transactions_guest'
+      
+      if (userSession) {
+        const user = JSON.parse(userSession)
+        storageKey = `ovni_transactions_${user.email || user.id || 'default'}`
+      }
+
+      // 2. Traer el historial específico de ESTE usuario activo
+      const currentData = localStorage.getItem(storageKey)
+      const list = currentData ? JSON.parse(currentData) : []
+      
+      // Objeto estructurado de la transacción
+      const newTransfer = {
+        id: `tx-${Date.now()}`,
+        type: 'P2P_TRANSFER',
+        status: 'COMPLETED',
+        amount: parseFloat(amount),
+        currency: currency,
+        description: `Transferencia enviada a ${email}`,
+        createdAt: new Date().toISOString(),
+      }
+
+      // 3. Guardar el nuevo registro en la llave exclusiva del usuario
+      localStorage.setItem(storageKey, JSON.stringify([newTransfer, ...list]))
+
+      // 4. ¡MAGIA AUTÓNOMA! Disparamos el evento para que la tabla de movimientos se actualice sola sin recargar
+      window.dispatchEvent(new Event('update_wallet_history'))
+
+    } catch (err) {
+      console.error("Error guardando la transacción:", err)
     }
 
-    localStorage.setItem('ovni_transactions', JSON.stringify([newTransfer, ...list]))
-  } catch (err) {
-    console.error("Error guardando la transacción:", err)
+    setSuccess(true)
+
+    setTimeout(() => {
+      navigate('/dashboard')
+    }, 2000)
   }
-
-  setSuccess(true)
-
-  setTimeout(() => {
-    navigate('/dashboard')
-  }, 2000)
-}
 
   return (
     <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
