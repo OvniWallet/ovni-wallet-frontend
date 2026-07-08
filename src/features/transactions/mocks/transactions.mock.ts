@@ -30,14 +30,36 @@ const initialTransactions: Transaction[] = [
   },
 ]
 
-if (!localStorage.getItem('ovni_transactions')) {
-  localStorage.setItem('ovni_transactions', JSON.stringify(initialTransactions))
+const getStorageKey = (): string => {
+  try {
+    const userSession = localStorage.getItem('user'); 
+    if (userSession) {
+      const user = JSON.parse(userSession);
+      return `ovni_transactions_${user.email || user.id || 'default'}`;
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return 'ovni_transactions_guest';
 }
 
 export const getMockTransactions = (): Transaction[] => {
-  const data = localStorage.getItem('ovni_transactions')
-  return data ? JSON.parse(data) : initialTransactions
+  const storageKey = getStorageKey();
+  const data = localStorage.getItem(storageKey);
+  
+  if (!data) {
+    localStorage.setItem(storageKey, JSON.stringify(initialTransactions));
+    return initialTransactions;
+  }
+  
+  return JSON.parse(data);
 }
 
-// Mantener la exportación original para evitar errores en otras vistas
-export const transactions: Transaction[] = getMockTransactions()
+
+export const getLatestTransactions = (): Transaction[] => {
+  return getMockTransactions();
+};
+
+// Dejamos la exportación vieja por compatibilidad si se usa en otros lados,
+// pero internamente llamará a la función dinámica.
+export const transactions: Transaction[] = getMockTransactions();
