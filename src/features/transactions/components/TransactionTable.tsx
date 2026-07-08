@@ -2,33 +2,27 @@ import { useState, useEffect } from 'react'
 import type { Transaction } from '../types'
 import { getLatestTransactions } from '../mocks/transactions.mock'
 
+// Dejamos la interfaz vacía o limpia para que no te dé errores en otros archivos que llamen a <TransactionTable />
 interface TransactionTableProps {
-  transactions?: Transaction[] // Sigue siendo opcional por compatibilidad
+  transactions?: Transaction[]
 }
 
-// Limpiamos la prop que no se usa para quitar la advertencia de TypeScript
-export function TransactionTable({ transactions }: TransactionTableProps) {
-  // Inicializamos el estado directamente con el mock dinámico que lee el localStorage por usuario
-  const [history, setHistory] = useState<Transaction[]>(() => {
-    // Si por alguna razón el padre pasa transacciones directas, las usamos; si no, vamos al mock por usuario
-    return transactions && transactions.length > 0 ? transactions : getLatestTransactions()
-  })
+// QUITAMOS el parámetro 'transactions' que no se usaba para eliminar la advertencia de TypeScript
+export function TransactionTable({}: TransactionTableProps) {
+  // Estado local que se refrescará automáticamente leyendo los mocks dinámicos
+  const [history, setHistory] = useState<Transaction[]>(() => getLatestTransactions())
 
   useEffect(() => {
-    const handleHistoryUpdate = () => {
-      setHistory(getLatestTransactions())
-    }
-
-    // Escuchamos el evento autónomo para actualizar en tiempo real
-    window.addEventListener('update_wallet_history', handleHistoryUpdate)
-    
-    // Si cambian las props o se monta el componente, sincronizamos con lo último
+    // Sincronización inmediata al montar la tabla
     setHistory(getLatestTransactions())
 
-    return () => {
-      window.removeEventListener('update_wallet_history', handleHistoryUpdate)
-    }
-  }, [transactions])
+    // REFRESCO INMORTAL: Revisa el localStorage cada 1000ms (1 segundo)
+    const interval = setInterval(() => {
+      setHistory(getLatestTransactions())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <section>
