@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
+import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 
 import { GuestRoute } from './GuestRoute'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -16,7 +17,7 @@ export function AppRouter() {
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<div>Dashboard</div>} />
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
