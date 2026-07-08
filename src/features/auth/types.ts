@@ -23,7 +23,7 @@ export interface RegisterRequest {
   first_name: string
   last_name: string
   country_of_residence: string
-  timezone: string
+
 }
 
 export interface RegisterResponse {

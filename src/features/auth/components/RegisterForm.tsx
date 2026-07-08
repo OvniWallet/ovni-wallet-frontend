@@ -11,14 +11,13 @@ export function RegisterForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [country, setCountry] = useState('ARG')
-  const [timezone, setTimezone] = useState('America/Argentina/Buenos_Aires')
   const [error, setError] = useState('')
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setError('')
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !country.trim() || !timezone.trim()) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !country.trim()) {
       setError('Todos los campos son obligatorios.')
       return
     }
@@ -30,7 +29,6 @@ export function RegisterForm() {
         email,
         password,
         country_of_residence: country,
-        timezone,
       })
 
       navigate('/login')
@@ -57,9 +55,6 @@ export function RegisterForm() {
 
       <label htmlFor="country">País</label>
       <input id="country" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} />
-
-      <label htmlFor="timezone">Zona horaria</label>
-      <input id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
 
       {error && <p role="alert">{error}</p>}
 
