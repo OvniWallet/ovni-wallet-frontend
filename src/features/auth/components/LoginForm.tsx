@@ -2,7 +2,6 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
-
 export function LoginForm() {
   const navigate = useNavigate()
   const { login, loading } = useAuth()
@@ -29,35 +28,24 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="auth-card" onSubmit={handleSubmit}>
       <h1>Iniciar sesión</h1>
 
       <label htmlFor="email">Email</label>
-      <input
-        id="email"
-        type="email"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        placeholder="tu@email.com"
-      />
+      <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
 
       <label htmlFor="password">Contraseña</label>
-      <input
-        id="password"
-        type="password"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-        placeholder="Tu contraseña"
-      />
+      <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Tu contraseña" />
 
       {error && <p role="alert">{error}</p>}
 
-      <button type="submit" disabled={loading}>
-        {loading ? 'Ingresando...' : 'Ingresar'}
+      <button className="auth-button" type="submit" disabled={loading}>
+        {loading ? 'Ingresando...' : 'Iniciar sesión'}
       </button>
-      <p>
-        ¿No tienes una cuenta? <Link to="/register">Crear cuenta</Link>
-     </p>
+
+      <p className="auth-link-box">
+        ¿No tienes una cuenta? <Link to="/register">Crear cuenta →</Link>
+      </p>
     </form>
   )
 }

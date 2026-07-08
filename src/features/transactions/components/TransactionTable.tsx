@@ -9,18 +9,27 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
     <section>
       <h2>Últimos movimientos</h2>
 
-      <ul>
+      <div className="transaction-list">
         {transactions.map((transaction) => (
-          <li key={transaction.id}>
-            <strong>{transaction.description}</strong>
-            <span>
-              {' '}
-              {transaction.amount.toFixed(2)} {transaction.currency}
-            </span>
-            <small> · {transaction.status}</small>
-          </li>
+          <article className="transaction-item" key={transaction.id}>
+            <div>
+              <strong>{transaction.description}</strong>
+              <p>{transaction.type}</p>
+            </div>
+
+            <div>
+              <strong>
+                {transaction.amount.toLocaleString('es-AR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{' '}
+                {transaction.currency}
+              </strong>
+              <p>{transaction.status}</p>
+            </div>
+          </article>
         ))}
-      </ul>
+      </div>
     </section>
   )
 }

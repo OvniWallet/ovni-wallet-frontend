@@ -18,14 +18,7 @@ export function RegisterForm() {
     event.preventDefault()
     setError('')
 
-    if (
-      !firstName.trim() ||
-      !lastName.trim() ||
-      !email.trim() ||
-      !password.trim() ||
-      !country.trim() ||
-      !timezone.trim()
-    ) {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !country.trim() || !timezone.trim()) {
       setError('Todos los campos son obligatorios.')
       return
     }
@@ -47,61 +40,35 @@ export function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="auth-card" onSubmit={handleSubmit}>
       <h1>Crear cuenta</h1>
 
       <label htmlFor="firstName">Nombre</label>
-      <input
-        id="firstName"
-        value={firstName}
-        onChange={(event) => setFirstName(event.target.value)}
-      />
+      <input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Alan" />
 
       <label htmlFor="lastName">Apellido</label>
-      <input
-        id="lastName"
-        value={lastName}
-        onChange={(event) => setLastName(event.target.value)}
-      />
+      <input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Cardiello" />
 
       <label htmlFor="email">Email</label>
-      <input
-        id="email"
-        type="email"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-      />
+      <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
 
       <label htmlFor="password">Contraseña</label>
-      <input
-        id="password"
-        type="password"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-      />
+      <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Tu contraseña" />
 
       <label htmlFor="country">País</label>
-      <input
-        id="country"
-        value={country}
-        onChange={(event) => setCountry(event.target.value.toUpperCase())}
-      />
+      <input id="country" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} />
 
       <label htmlFor="timezone">Zona horaria</label>
-      <input
-        id="timezone"
-        value={timezone}
-        onChange={(event) => setTimezone(event.target.value)}
-      />
+      <input id="timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
 
       {error && <p role="alert">{error}</p>}
 
-      <button type="submit" disabled={loading}>
-        {loading ? 'Creando cuenta...' : 'Registrarme'}
+      <button className="auth-button" type="submit" disabled={loading}>
+        {loading ? 'Creando cuenta...' : 'Crear cuenta'}
       </button>
 
-      <p>
-        ¿Ya tienes una cuenta? <Link to="/login">Iniciar sesión</Link>
+      <p className="auth-link-box">
+        ¿Ya tienes una cuenta? <Link to="/login">Iniciar sesión →</Link>
       </p>
     </form>
   )
