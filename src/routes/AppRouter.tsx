@@ -30,6 +30,7 @@ export function AppRouter() {
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/chatbot" element={<ChatbotPage />} />
           </Route>
+          <Route path="/dashboard" element={<DashboardPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
