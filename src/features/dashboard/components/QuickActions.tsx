@@ -4,7 +4,7 @@ const actions = [
   { label: 'Exchange', path: '/exchange' },
   { label: 'Historial', path: '/transactions' },
   { label: 'Tarjetas', path: '/cards' },
-  { label: 'Chatbot', path: '/chatbot' },
+  { label: 'Enviar Dinero', path: '/p2p' },
 ]
 
 export function QuickActions() {

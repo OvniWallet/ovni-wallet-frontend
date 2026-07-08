@@ -7,6 +7,7 @@ import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage
 import { ExchangePage } from '@/features/exchange/pages/ExchangePage'
 import { CardsPage } from '@/features/virtual-cards/pages/CardsPage'
 import { ChatbotPage } from '@/features/chatbot/pages/ChatbotPage'
+import { P2PPage } from '@/features/p2p/pages/P2PPage'
 
 import { AppLayout } from '@/layouts/AppLayout'
 
@@ -29,6 +30,7 @@ export function AppRouter() {
             <Route path="/exchange" element={<ExchangePage />} />
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/chatbot" element={<ChatbotPage />} />
+            <Route path="/p2p" element={<P2PPage />} />
           </Route>
           <Route path="/dashboard" element={<DashboardPage />} />
         </Route>

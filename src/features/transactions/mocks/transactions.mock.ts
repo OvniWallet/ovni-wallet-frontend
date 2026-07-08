@@ -1,6 +1,6 @@
 import type { Transaction } from '../types'
 
-export const transactions: Transaction[] = [
+const initialTransactions: Transaction[] = [
   {
     id: 'tx-1',
     type: 'DEPOSIT',
@@ -29,3 +29,15 @@ export const transactions: Transaction[] = [
     createdAt: '2026-07-03T14:00:00Z',
   },
 ]
+
+if (!localStorage.getItem('ovni_transactions')) {
+  localStorage.setItem('ovni_transactions', JSON.stringify(initialTransactions))
+}
+
+export const getMockTransactions = (): Transaction[] => {
+  const data = localStorage.getItem('ovni_transactions')
+  return data ? JSON.parse(data) : initialTransactions
+}
+
+// Mantener la exportación original para evitar errores en otras vistas
+export const transactions: Transaction[] = getMockTransactions()
