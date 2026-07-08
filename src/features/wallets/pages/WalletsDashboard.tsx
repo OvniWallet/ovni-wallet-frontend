@@ -16,9 +16,6 @@ export function WalletsDashboard() {
           <BalanceCard key={balance.currency} balance={balance} />
         ))}
       </div>
-      {balances.map((balance) => (
-        <BalanceCard key={balance.currency} balance={balance} />
-      ))}
     </section>
   )
 }
