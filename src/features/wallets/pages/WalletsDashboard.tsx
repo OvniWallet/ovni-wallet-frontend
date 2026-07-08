@@ -11,6 +11,11 @@ export function WalletsDashboard() {
     <section>
       <h2>Mis balances</h2>
 
+      <div className="balance-grid">
+        {balances.map((balance) => (
+          <BalanceCard key={balance.currency} balance={balance} />
+        ))}
+      </div>
       {balances.map((balance) => (
         <BalanceCard key={balance.currency} balance={balance} />
       ))}

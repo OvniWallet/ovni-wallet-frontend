@@ -1,8 +1,9 @@
 export function DashboardHeader() {
   return (
-    <header>
-      <h1>Ovni Wallet</h1>
-      <p>Panel principal</p>
-    </header>
+    <section className="dashboard-hero">
+      <p>Resumen general</p>
+      <h1>Bienvenido a Ovni Wallet</h1>
+      <span>Gestiona tus balances, movimientos y operaciones desde un solo lugar.</span>
+    </section>
   )
 }

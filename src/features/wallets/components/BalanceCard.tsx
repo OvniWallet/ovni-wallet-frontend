@@ -5,10 +5,15 @@ interface BalanceCardProps {
 }
 
 export function BalanceCard({ balance }: BalanceCardProps) {
+  const formattedAmount = balance.amount.toLocaleString('es-AR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+
   return (
-    <article>
-      <h3>{balance.currency}</h3>
-      <p>{balance.amount.toFixed(2)}</p>
+    <article className="balance-card">
+      <span>{balance.currency}</span>
+      <strong>{formattedAmount}</strong>
     </article>
   )
 }
