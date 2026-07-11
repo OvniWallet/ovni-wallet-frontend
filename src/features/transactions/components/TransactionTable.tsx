@@ -1,42 +1,74 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Transaction } from '../types'
 import { getLatestTransactions } from '../mocks/transactions.mock'
 
-// Dejamos la interfaz vacía o limpia para que no te dé errores en otros archivos que llamen a <TransactionTable />
 interface TransactionTableProps {
   transactions?: Transaction[]
+  limit?: number
+  showAllLink?: boolean
 }
 
-// QUITAMOS el parámetro 'transactions' que no se usaba para eliminar la advertencia de TypeScript
-export function TransactionTable({}: TransactionTableProps) {
-  // Estado local que se refrescará automáticamente leyendo los mocks dinámicos
-  const [history, setHistory] = useState<Transaction[]>(() => getLatestTransactions())
+const transactionIcons: Record<string, string> = {
+  DEPOSIT: '↓',
+  WITHDRAWAL: '↑',
+  EXCHANGE: '⇄',
+  P2P_TRANSFER: '↗',
+  CARD_SPEND: '▣',
+}
+
+export function TransactionTable({
+  transactions,
+  limit,
+  showAllLink = false,
+}: TransactionTableProps) {
+  const [history, setHistory] = useState<Transaction[]>(() =>
+    getLatestTransactions(),
+  )
 
   useEffect(() => {
-    // Sincronización inmediata al montar la tabla
+    if (transactions) return
+
     setHistory(getLatestTransactions())
 
-    // REFRESCO INMORTAL: Revisa el localStorage cada 1000ms (1 segundo)
     const interval = setInterval(() => {
       setHistory(getLatestTransactions())
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [transactions])
+
+  const source = transactions ?? history
+  const visibleTransactions = limit ? source.slice(0, limit) : source
 
   return (
-    <section>
-      <h2>Últimos movimientos</h2>
+    <section className="transactions-section">
+      <header className="section-heading">
+        <span>
+          <p>Actividad</p>
+          <h2>Últimos movimientos</h2>
+        </span>
+
+        {showAllLink && (
+          <Link className="section-link" to="/transactions">
+            Ver todos
+          </Link>
+        )}
+      </header>
 
       <div className="transaction-list">
-        {history.map((transaction) => (
+        {visibleTransactions.map((transaction) => (
           <article className="transaction-item" key={transaction.id}>
-            <div>
-              <strong>{transaction.description}</strong>
-              <p>{transaction.type}</p>
-            </div>
+            <span className="transaction-icon" aria-hidden="true">
+              {transactionIcons[transaction.type] ?? '•'}
+            </span>
 
-            <div>
+            <p className="transaction-info">
+              <strong>{transaction.description}</strong>
+              <span>{transaction.type.replace(/_/g, ' ')}</span>
+            </p>
+
+            <p className="transaction-value">
               <strong>
                 {transaction.amount.toLocaleString('es-AR', {
                   minimumFractionDigits: 2,
@@ -44,8 +76,9 @@ export function TransactionTable({}: TransactionTableProps) {
                 })}{' '}
                 {transaction.currency}
               </strong>
-              <p>{transaction.status}</p>
-            </div>
+
+              <small>{transaction.status}</small>
+            </p>
           </article>
         ))}
       </div>

@@ -8,8 +8,15 @@ const balances = [
 
 export function WalletsDashboard() {
   return (
-    <section>
-      <h2>Mis balances</h2>
+    <section className="wallets-section">
+      <div className="section-heading">
+        <div>
+          <p>Distribución</p>
+          <h2>Mis balances</h2>
+        </div>
+
+        <button type="button">Ver todos</button>
+      </div>
 
       <div className="balance-grid">
         {balances.map((balance) => (

@@ -1,17 +1,24 @@
-// src/features/p2p/pages/P2PPage.tsx
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+const availableBalances = [
+  { currency: 'ARS', amount: '$125.000,50' },
+  { currency: 'USD', amount: 'US$250,75' },
+  { currency: 'EUR', amount: '€180,20' },
+]
+
 export function P2PPage() {
   const navigate = useNavigate()
+
   const [email, setEmail] = useState('')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  const handleTransfer = async (e: FormEvent) => {
-    e.preventDefault()
+  const handleTransfer = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
     if (!email || !amount) return
 
     setLoading(true)
@@ -19,38 +26,35 @@ export function P2PPage() {
     setLoading(false)
 
     try {
-      // 1. Obtener de forma dinámica el identificador del usuario logueado actualmente
       const userSession = localStorage.getItem('user')
       let storageKey = 'ovni_transactions_guest'
-      
+
       if (userSession) {
         const user = JSON.parse(userSession)
         storageKey = `ovni_transactions_${user.email || user.id || 'default'}`
       }
 
-      // 2. Traer el historial específico de ESTE usuario activo
       const currentData = localStorage.getItem(storageKey)
-      const list = currentData ? JSON.parse(currentData) : []
-      
-      // Objeto estructurado de la transacción
+      const transactions = currentData ? JSON.parse(currentData) : []
+
       const newTransfer = {
         id: `tx-${Date.now()}`,
         type: 'P2P_TRANSFER',
         status: 'COMPLETED',
-        amount: parseFloat(amount),
-        currency: currency,
+        amount: Number(amount),
+        currency,
         description: `Transferencia enviada a ${email}`,
         createdAt: new Date().toISOString(),
       }
 
-      // 3. Guardar el nuevo registro en la llave exclusiva del usuario
-      localStorage.setItem(storageKey, JSON.stringify([newTransfer, ...list]))
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify([newTransfer, ...transactions]),
+      )
 
-      // 4. ¡MAGIA AUTÓNOMA! Disparamos el evento para que la tabla de movimientos se actualice sola sin recargar
       window.dispatchEvent(new Event('update_wallet_history'))
-
-    } catch (err) {
-      console.error("Error guardando la transacción:", err)
+    } catch (error) {
+      console.error('Error guardando la transacción:', error)
     }
 
     setSuccess(true)
@@ -60,64 +64,104 @@ export function P2PPage() {
     }, 2000)
   }
 
+  const submitText = loading
+    ? 'Procesando envío...'
+    : `Enviar ${amount || '0'} ${currency}`
+
   return (
-    <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
-      <form className="auth-card" onSubmit={handleTransfer} style={{ width: '100%', maxWidth: '400px' }}>
-        <h1>Enviar Dinero </h1>
-        
-        {success ? (
-          <div style={{ textAlign: 'center', padding: '1rem', color: '#10B981' }}>
-            <p>¡Transferencia enviada con éxito!</p>
-            <p style={{ fontSize: '0.85rem', color: '#6B7280' }}>Redirigiendo al panel...</p>
-          </div>
-        ) : (
-          <>
+    <main className="transfer-page">
+      <form className="form-card transfer-card" onSubmit={handleTransfer}>
+        <header className="form-heading">
+          <p>Transferencias P2P</p>
+          <h1>Enviar dinero</h1>
+          <span>Transferí saldo a otro usuario de Ovni Wallet.</span>
+        </header>
+
+        {success && (
+          <p className="form-message">
+            <strong>Transferencia enviada con éxito</strong>
+            <span>Redirigiendo al panel...</span>
+          </p>
+        )}
+
+        {!success && (
+          <fieldset className="transfer-fields">
             <label htmlFor="recipient">Email del destinatario</label>
-            <input 
-              id="recipient" 
-              type="email" 
-              placeholder="amigo@correo.com" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
+            <input
+              id="recipient"
+              type="email"
+              placeholder="amigo@correo.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
             />
 
             <label htmlFor="amount">Monto</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input 
-                id="amount" 
-                type="number" 
-                placeholder="0.00" 
-                value={amount} 
-                onChange={(e) => setAmount(e.target.value)} 
-                required 
-                style={{ flex: 1 }}
+
+            <section className="transfer-amount-row">
+              <input
+                id="amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                placeholder="0,00"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                required
               />
-              <select 
-                value={currency} 
-                onChange={(e) => setCurrency(e.target.value)}
-                style={{ padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #D1D5DB' }}
+
+              <select
+                aria-label="Moneda"
+                value={currency}
+                onChange={(event) => setCurrency(event.target.value)}
               >
                 <option value="USD">USD</option>
                 <option value="ARS">ARS</option>
                 <option value="EUR">EUR</option>
               </select>
-            </div>
+            </section>
 
-            <button className="auth-button" type="submit" disabled={loading} style={{ marginTop: '1.5rem' }}>
-              {loading ? 'Procesando envío...' : `Enviar ${amount || '0'} ${currency}`}
+            <button type="submit" disabled={loading}>
+              {submitText}
             </button>
-            
-            <button 
-              type="button" 
-              onClick={() => navigate('/dashboard')} 
-              style={{ background: 'none', border: 'none', color: '#3B82F6', marginTop: '1rem', cursor: 'pointer', width: '100%' }}
+
+            <button
+              className="link-button"
+              type="button"
+              onClick={() => navigate('/dashboard')}
             >
               Cancelar
             </button>
-          </>
+          </fieldset>
         )}
       </form>
-    </div>
+
+      <aside className="transfer-info">
+        <p>Transferencias seguras</p>
+        <h2>Enviá dinero de forma simple.</h2>
+
+        <span>
+          Utilizá el correo del destinatario para transferir entre usuarios de
+          Ovni Wallet. Revisá los datos antes de confirmar.
+        </span>
+
+        <ul className="transfer-tips">
+          <li>Verificá el correo del destinatario.</li>
+          <li>Elegí correctamente la moneda.</li>
+          <li>La operación aparecerá en tu historial.</li>
+        </ul>
+
+        <h3>Saldos disponibles</h3>
+
+        <dl className="transfer-balances">
+          {availableBalances.map((balance) => (
+            <span className="transfer-balance" key={balance.currency}>
+              <dt>{balance.currency}</dt>
+              <dd>{balance.amount}</dd>
+            </span>
+          ))}
+        </dl>
+      </aside>
+    </main>
   )
 }
