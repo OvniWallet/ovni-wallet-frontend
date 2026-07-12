@@ -1,8 +1,13 @@
-[data-theme='dark'] {
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-  --primary-color: #3b82f6;
-  --primary-hover: #60a5fa;
+[data-theme='light'] {
+  --bg-primary: #f4f7f5;
+  --bg-secondary: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #f0f4f1;
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+
+  --border-color: #dbe3dd;
+  --shadow-soft: 0 12px 30px rgba(15, 23, 42, 0.08);
 }

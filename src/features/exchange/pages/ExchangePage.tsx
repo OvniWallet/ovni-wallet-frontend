@@ -1,13 +1,17 @@
+import { ExchangeForm } from '../components/ExchangeForm'
+
 export function ExchangePage() {
   return (
-    <section>
-      <h2>Exchange</h2>
+    <section className="exchange-page">
+      <ExchangeForm />
 
-      <p>Convierte tus monedas de forma rápida.</p>
-
-      <button type="button">
-        Realizar intercambio
-      </button>
+      <aside className="exchange-info">
+        <p>Operación simple</p>
+        <h2>Convertí tus monedas en pocos pasos.</h2>
+        <span>
+          Revisá la cotización estimada antes de confirmar la operación.
+        </span>
+      </aside>
     </section>
   )
 }

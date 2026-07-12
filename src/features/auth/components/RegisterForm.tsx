@@ -17,7 +17,14 @@ export function RegisterForm() {
     event.preventDefault()
     setError('')
 
-    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim() || !country.trim()) {
+    const hasEmptyFields =
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !country.trim()
+
+    if (hasEmptyFields) {
       setError('Todos los campos son obligatorios.')
       return
     }
@@ -33,28 +40,70 @@ export function RegisterForm() {
 
       navigate('/login')
     } catch {
-      setError('No se pudo crear la cuenta. Intenta nuevamente.')
+      setError('No se pudo crear la cuenta. Intentá nuevamente.')
     }
   }
 
   return (
     <form className="auth-card" onSubmit={handleSubmit}>
-      <h1>Crear cuenta</h1>
+      <div className="auth-heading">
+        <p>Creá tu cuenta</p>
+        <h1>Registrarse</h1>
+        <span>Completá tus datos para comenzar a usar Ovni Wallet.</span>
+      </div>
 
-      <label htmlFor="firstName">Nombre</label>
-      <input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Alan" />
+      <div className="auth-fields-grid">
+        <div>
+          <label htmlFor="firstName">Nombre</label>
+          <input
+            id="firstName"
+            value={firstName}
+            onChange={(event) => setFirstName(event.target.value)}
+            placeholder="Tu nombre"
+            autoComplete="given-name"
+          />
+        </div>
 
-      <label htmlFor="lastName">Apellido</label>
-      <input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Cardiello" />
+        <div>
+          <label htmlFor="lastName">Apellido</label>
+          <input
+            id="lastName"
+            value={lastName}
+            onChange={(event) => setLastName(event.target.value)}
+            placeholder="Tu apellido"
+            autoComplete="family-name"
+          />
+        </div>
+      </div>
 
-      <label htmlFor="email">Email</label>
-      <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
+      <label htmlFor="email">Correo electrónico</label>
+      <input
+        id="email"
+        type="email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        placeholder="nombre@correo.com"
+        autoComplete="email"
+      />
 
       <label htmlFor="password">Contraseña</label>
-      <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Tu contraseña" />
+      <input
+        id="password"
+        type="password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        placeholder="Creá una contraseña segura"
+        autoComplete="new-password"
+      />
 
       <label htmlFor="country">País</label>
-      <input id="country" value={country} onChange={(e) => setCountry(e.target.value.toUpperCase())} />
+      <input
+        id="country"
+        maxLength={3}
+        value={country}
+        onChange={(event) => setCountry(event.target.value.toUpperCase())}
+        placeholder="ARG"
+      />
 
       {error && <p role="alert">{error}</p>}
 
@@ -63,7 +112,8 @@ export function RegisterForm() {
       </button>
 
       <p className="auth-link-box">
-        ¿Ya tienes una cuenta? <Link to="/login">Iniciar sesión →</Link>
+        ¿Ya tenés una cuenta?
+        <Link to="/login"> Iniciar sesión</Link>
       </p>
     </form>
   )
