@@ -1,3 +1,4 @@
+import { httpClient } from './httpClient'
 import type {
   LoginRequest,
   LoginResponse,
@@ -5,76 +6,55 @@ import type {
   RegisterResponse,
 } from '@/features/auth/types'
 
+const ACCESS_TOKEN_TTL_SECONDS = 7200
+
 export const authApi = {
   register: async (payload: RegisterRequest): Promise<RegisterResponse> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    // Generamos un ID único basado en el email para que no comparta datos
-    const mockId = `user_${btoa(payload.email).substring(0, 8)}`;
-    const userData = {
-      id: mockId,
+    const response = await httpClient.post('/auth/register', {
       email: payload.email,
-      name: 'Usuario Mock',
-    };
+      password: payload.password,
+      first_name: payload.first_name,
+      last_name: payload.last_name,
+      country_code: payload.country_of_residence,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    })
 
-    // Guardamos en localStorage para que getLatestTransactions() lo encuentre bajo la llave 'user'
-    localStorage.setItem('user', JSON.stringify(userData));
+    const user = response.data.data.user
 
     return {
-      token: `fake-jwt-${mockId}`,
-      refresh_token: 'fake-refresh-token-ovniwallet',
-      user: userData,
+      user_id: user.id,
+      email: user.email,
+      wallet_id: undefined,
     } as unknown as RegisterResponse
   },
 
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    // CORRECCIÓN CLAVE: El ID ya no es estático. Ahora cambia según el correo ingresado.
-    // Si entras con juan@mail.com tendrá un ID, y si entras con pedro@mail.com tendrá otro.
-    const mockId = `user_${btoa(credentials.email).substring(0, 8)}`;
-    const userData = {
-      id: mockId,
-      email: credentials.email,
-      name: credentials.email.split('@')[0], // Nombre dinámico basado en su correo
-    };
-
-    // Forzamos la actualización de la sesión en el almacenamiento para nuestros mocks
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    // Sincronizamos la llave global de la ventana inmediatamente al entrar
-    (window as any).__ovniUserKey = credentials.email;
+    const response = await httpClient.post('/auth/login', credentials)
+    const data = response.data.data
 
     return {
-      token: `fake-jwt-${mockId}`,
-      refresh_token: 'fake-refresh-token-ovniwallet',
-      user: userData,
-    } as unknown as LoginResponse
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: ACCESS_TOKEN_TTL_SECONDS,
+    }
   },
 
   refresh: async (refreshToken: string): Promise<LoginResponse> => {
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    const response = await httpClient.post('/auth/refresh', {
+      refresh_token: refreshToken,
+    })
+    const data = response.data.data
 
     return {
-      token: 'fake-jwt-token-ovniwallet',
-      refresh_token: refreshToken,
-      user: {
-        id: 'user-mock-123',
-        email: 'santiago@ovni.com',
-        name: 'Santiago Dev',
-      },
-    } as unknown as LoginResponse
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: ACCESS_TOKEN_TTL_SECONDS,
+    }
   },
 
   logout: async (): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 200))
-    
-    // CORRECCIÓN CLAVE PARA EL CIERRE DE SESIÓN:
-    // 1. Borramos la sesión del almacenamiento
-    localStorage.removeItem('user');
-    localStorage.removeItem('auth_user');
-    
-    // 2. Destruimos la llave mágica de la ventana para que el siguiente usuario empiece de cero
-    delete (window as any).__ovniUserKey;
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (!refreshToken) return
+    await httpClient.post('/auth/logout', { refresh_token: refreshToken })
   },
 }
