@@ -1,4 +1,4 @@
-import { getMockQuote } from '../mocks/exchange.mock'
+import { exchangeApi } from '@/api/exchange.api'
 import type {
   ExchangeQuote,
   ExchangeRequest,
@@ -9,28 +9,21 @@ export const exchangeService = {
   async getQuote(
     request: ExchangeRequest,
   ): Promise<ExchangeQuote> {
-    await new Promise((resolve) => setTimeout(resolve, 300))
-
-    return getMockQuote(
-      request.fromCurrency,
-      request.toCurrency,
-    )
+    return exchangeApi.getQuote({
+      source_currency: request.fromCurrency,
+      target_currency: request.toCurrency,
+      source_amount_cents: Math.round(request.amount * 100),
+    })
   },
 
   async exchange(
     request: ExchangeRequest,
   ): Promise<ExchangeResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 700))
-
-    const quote = getMockQuote(
-      request.fromCurrency,
-      request.toCurrency,
-    )
-
-    return {
-      convertedAmount: request.amount * quote.rate,
-      rate: quote.rate,
-      transactionId: `exchange-${Date.now()}`,
-    }
+    return exchangeApi.exchange({
+      source_currency: request.fromCurrency,
+      target_currency: request.toCurrency,
+      source_amount_cents: Math.round(request.amount * 100),
+      idempotency_key: crypto.randomUUID(),
+    })
   },
 }

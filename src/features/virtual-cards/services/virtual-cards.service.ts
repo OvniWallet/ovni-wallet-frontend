@@ -1,4 +1,4 @@
-import { virtualCardMock } from '../mocks/virtual-cards.mock'
+import { virtualCardsApi } from '@/api/virtualCards.api'
 import type {
   CreateVirtualCardRequest,
   CreateVirtualCardResponse,
@@ -8,52 +8,37 @@ import type {
   VirtualCardData,
 } from '../types'
 
-let currentCard: VirtualCardData = { ...virtualCardMock }
-
 export const virtualCardsService = {
   async getCard(): Promise<VirtualCardData> {
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    return { ...currentCard }
+    const cards = await virtualCardsApi.getCards()
+
+    return cards[0]
   },
 
   async createCard(
     request: CreateVirtualCardRequest,
   ): Promise<CreateVirtualCardResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 600))
-
-    currentCard = {
-      ...virtualCardMock,
-      id: `card-${Date.now()}`,
-      currency: request.currency,
-    }
-
-    return { card: { ...currentCard } }
+    return virtualCardsApi.createCard(request.currency)
   },
 
   async updateStatus(
     request: UpdateVirtualCardStatusRequest,
   ): Promise<VirtualCardData> {
-    await new Promise((resolve) => setTimeout(resolve, 400))
-
-    currentCard = {
-      ...currentCard,
-      status: request.status,
+    if (request.status !== 'BLOCKED') {
+      throw new Error('El backend todavía no permite desbloquear tarjetas.')
     }
 
-    return { ...currentCard }
+    return virtualCardsApi.blockCard(request.cardId)
   },
 
   async simulateSpend(
     request: SimulateCardSpendRequest,
   ): Promise<SimulateCardSpendResponse> {
-    await new Promise((resolve) => setTimeout(resolve, 700))
-
-    return {
-      transactionId: `card-spend-${Date.now()}`,
-      status:
-        currentCard.status === 'ACTIVE' && request.amount > 0
-          ? 'COMPLETED'
-          : 'REJECTED',
-    }
+    return virtualCardsApi.simulateSpend({
+      card_id: request.cardId,
+      amount_in_cents: Math.round(request.amount * 100),
+      currency: request.currency,
+      merchant: request.merchant,
+    })
   },
 }

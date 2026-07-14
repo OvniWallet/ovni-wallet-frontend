@@ -30,13 +30,14 @@ export function RegisterForm() {
     }
 
     try {
-      await register({
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        password,
-        country_of_residence: country,
-      })
+    await register({
+     first_name: firstName,
+     last_name: lastName,
+     email,
+     password,
+     country_code: country,
+     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+   })
 
       navigate('/login')
     } catch {

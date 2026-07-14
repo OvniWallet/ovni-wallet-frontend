@@ -2,24 +2,29 @@ import { authApi } from '@/api/auth.api'
 import type {
   LoginRequest,
   LoginResponse,
+  RefreshResponse,
   RegisterRequest,
   RegisterResponse,
 } from '../types'
 
 export const authService = {
-  login: async (credentials: LoginRequest): Promise<LoginResponse> => {
+  login(credentials: LoginRequest): Promise<LoginResponse> {
     return authApi.login(credentials)
   },
 
-  register: async (data: RegisterRequest): Promise<RegisterResponse> => {
+  register(data: RegisterRequest): Promise<RegisterResponse> {
     return authApi.register(data)
   },
 
-  refresh: async (refreshToken: string): Promise<LoginResponse> => {
+  refresh(refreshToken: string): Promise<RefreshResponse> {
     return authApi.refresh(refreshToken)
   },
 
-  logout: async (): Promise<void> => {
-    return authApi.logout()
+  async logout(): Promise<void> {
+    const refreshToken = localStorage.getItem('refresh_token')
+
+    if (!refreshToken) return
+
+    await authApi.logout(refreshToken)
   },
 }

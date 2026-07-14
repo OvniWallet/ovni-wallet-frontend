@@ -1,8 +1,9 @@
-import { httpClient } from './httpClient';
+import { httpClient } from './httpClient'
 
 export const walletsApi = {
-  getWallets: async () => {
-    const response = await httpClient.get('/wallets');
-    return response.data;
+  async getWallets() {
+    const response = await httpClient.get('/wallets/balance')
+
+    return response.data.data
   },
-};
+}
