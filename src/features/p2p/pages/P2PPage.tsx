@@ -1,167 +1,120 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { p2pApi, type P2PCurrency } from '@/api/p2p.api'
+import { getApiError } from '@/api/errors'
+import { parseToCents } from '@/lib/money'
 
-const availableBalances = [
-  { currency: 'ARS', amount: '$125.000,50' },
-  { currency: 'USD', amount: 'US$250,75' },
-  { currency: 'EUR', amount: '€180,20' },
-]
+const ERROR_MESSAGES: Record<string, string> = {
+  CANNOT_TRANSFER_TO_SELF: 'No puedes transferirte fondos a ti mismo.',
+  RECIPIENT_NOT_FOUND: 'El usuario destinatario no está registrado.',
+  INSUFFICIENT_FUNDS: 'No tienes saldo suficiente en esa divisa.',
+  BALANCE_CONFIGURATION_ERROR: 'Hay un problema con la configuración de divisas de una de las cuentas.',
+  INVALID_INPUT: 'Revisa los datos ingresados.',
+}
 
 export function P2PPage() {
   const navigate = useNavigate()
-
   const [email, setEmail] = useState('')
   const [amount, setAmount] = useState('')
-  const [currency, setCurrency] = useState('USD')
+  const [currency, setCurrency] = useState<P2PCurrency>('USD')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleTransfer = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const handleTransfer = async (e: FormEvent) => {
+    e.preventDefault()
+    setError('')
 
     if (!email || !amount) return
 
-    setLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setLoading(false)
-
-    try {
-      const userSession = localStorage.getItem('user')
-      let storageKey = 'ovni_transactions_guest'
-
-      if (userSession) {
-        const user = JSON.parse(userSession)
-        storageKey = `ovni_transactions_${user.email || user.id || 'default'}`
-      }
-
-      const currentData = localStorage.getItem(storageKey)
-      const transactions = currentData ? JSON.parse(currentData) : []
-
-      const newTransfer = {
-        id: `tx-${Date.now()}`,
-        type: 'P2P_TRANSFER',
-        status: 'COMPLETED',
-        amount: Number(amount),
-        currency,
-        description: `Transferencia enviada a ${email}`,
-        createdAt: new Date().toISOString(),
-      }
-
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify([newTransfer, ...transactions]),
-      )
-
-      window.dispatchEvent(new Event('update_wallet_history'))
-    } catch (error) {
-      console.error('Error guardando la transacción:', error)
+    const amountInCents = parseToCents(amount)
+    if (amountInCents === null) {
+      setError('Ingresa un monto válido mayor a cero.')
+      return
     }
 
-    setSuccess(true)
+    setLoading(true)
 
-    setTimeout(() => {
-      navigate('/dashboard')
-    }, 2000)
+    try {
+      await p2pApi.transfer({
+        recipient_email: email,
+        amount_in_cents: amountInCents,
+        currency,
+      })
+
+      setSuccess(true)
+      setTimeout(() => navigate('/dashboard'), 2000)
+    } catch (err) {
+      const { code, message } = getApiError(err)
+      setError(ERROR_MESSAGES[code] ?? message)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const submitText = loading
-    ? 'Procesando envío...'
-    : `Enviar ${amount || '0'} ${currency}`
-
   return (
-    <main className="transfer-page">
-      <form className="form-card transfer-card" onSubmit={handleTransfer}>
-        <header className="form-heading">
-          <p>Transferencias P2P</p>
-          <h1>Enviar dinero</h1>
-          <span>Transferí saldo a otro usuario de Ovni Wallet.</span>
-        </header>
+    <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
+      <form className="auth-card" onSubmit={handleTransfer} style={{ width: '100%', maxWidth: '400px' }}>
+        <h1>Enviar Dinero </h1>
 
-        {success && (
-          <p className="form-message">
-            <strong>Transferencia enviada con éxito</strong>
-            <span>Redirigiendo al panel...</span>
-          </p>
-        )}
-
-        {!success && (
-          <fieldset className="transfer-fields">
+        {success ? (
+          <div style={{ textAlign: 'center', padding: '1rem', color: '#10B981' }}>
+            <p>¡Transferencia enviada con éxito!</p>
+            <p style={{ fontSize: '0.85rem', color: '#6B7280' }}>Redirigiendo al panel...</p>
+          </div>
+        ) : (
+          <>
             <label htmlFor="recipient">Email del destinatario</label>
             <input
               id="recipient"
               type="email"
               placeholder="amigo@correo.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
 
             <label htmlFor="amount">Monto</label>
-
-            <section className="transfer-amount-row">
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 id="amount"
                 type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="0,00"
+                placeholder="0.00"
                 value={amount}
-                onChange={(event) => setAmount(event.target.value)}
+                onChange={(e) => setAmount(e.target.value)}
                 required
+                style={{ flex: 1 }}
               />
-
               <select
-                aria-label="Moneda"
                 value={currency}
-                onChange={(event) => setCurrency(event.target.value)}
+                onChange={(e) => setCurrency(e.target.value as P2PCurrency)}
+                style={{ padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #D1D5DB' }}
               >
                 <option value="USD">USD</option>
                 <option value="ARS">ARS</option>
                 <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="BRL">BRL</option>
+                <option value="JPY">JPY</option>
               </select>
-            </section>
+            </div>
 
-            <button type="submit" disabled={loading}>
-              {submitText}
+            {error && <p role="alert" style={{ color: '#DC2626' }}>{error}</p>}
+
+            <button className="auth-button" type="submit" disabled={loading} style={{ marginTop: '1.5rem' }}>
+              {loading ? 'Procesando envío...' : `Enviar ${amount || '0'} ${currency}`}
             </button>
 
             <button
-              className="link-button"
               type="button"
               onClick={() => navigate('/dashboard')}
+              style={{ background: 'none', border: 'none', color: '#3B82F6', marginTop: '1rem', cursor: 'pointer', width: '100%' }}
             >
               Cancelar
             </button>
-          </fieldset>
+          </>
         )}
       </form>
-
-      <aside className="transfer-info">
-        <p>Transferencias seguras</p>
-        <h2>Enviá dinero de forma simple.</h2>
-
-        <span>
-          Utilizá el correo del destinatario para transferir entre usuarios de
-          Ovni Wallet. Revisá los datos antes de confirmar.
-        </span>
-
-        <ul className="transfer-tips">
-          <li>Verificá el correo del destinatario.</li>
-          <li>Elegí correctamente la moneda.</li>
-          <li>La operación aparecerá en tu historial.</li>
-        </ul>
-
-        <h3>Saldos disponibles</h3>
-
-        <dl className="transfer-balances">
-          {availableBalances.map((balance) => (
-            <span className="transfer-balance" key={balance.currency}>
-              <dt>{balance.currency}</dt>
-              <dd>{balance.amount}</dd>
-            </span>
-          ))}
-        </dl>
-      </aside>
-    </main>
+    </div>
   )
 }
