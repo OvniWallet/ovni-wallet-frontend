@@ -7,19 +7,11 @@ interface VirtualCardProps {
   onToggleStatus: () => void
 }
 
-export function VirtualCard({
-  card,
-  loading,
-  onToggleStatus,
-}: VirtualCardProps) {
+export function VirtualCard({ card, loading, onToggleStatus }: VirtualCardProps) {
   const isBlocked = card.status === 'BLOCKED'
 
   return (
-    <article
-      className={
-        isBlocked ? 'virtual-card virtual-card-blocked' : 'virtual-card'
-      }
-    >
+    <article className={isBlocked ? 'virtual-card virtual-card-blocked' : 'virtual-card'}>
       <header className="virtual-card-header">
         <span className="virtual-card-brand">
           <span aria-hidden="true">👽</span>
@@ -29,23 +21,16 @@ export function VirtualCard({
         <CreditCard aria-hidden="true" size={26} />
       </header>
 
-      <strong className="virtual-card-number">{card.maskedNumber}</strong>
+      <strong className="virtual-card-number">{card.masked_number}</strong>
 
       <footer className="virtual-card-footer">
         <span>
-          <small>Titular</small>
-          <strong>{card.cardholderName}</strong>
-        </span>
-
-        <span>
-          <small>Vencimiento</small>
-          <strong>{card.expirationDate}</strong>
+          <small>Divisa</small>
+          <strong>{card.currency_default}</strong>
         </span>
       </footer>
 
-      <p className="virtual-card-status">
-        {isBlocked ? 'Tarjeta bloqueada' : 'Tarjeta activa'}
-      </p>
+      <p className="virtual-card-status">{isBlocked ? 'Tarjeta bloqueada' : 'Tarjeta activa'}</p>
 
       <button
         className="secondary-button virtual-card-action"
@@ -54,12 +39,7 @@ export function VirtualCard({
         disabled={loading}
       >
         {isBlocked ? <Unlock size={18} /> : <Lock size={18} />}
-
-        {loading
-          ? 'Actualizando...'
-          : isBlocked
-            ? 'Desbloquear tarjeta'
-            : 'Bloquear tarjeta'}
+        {loading ? 'Actualizando...' : isBlocked ? 'Desbloquear tarjeta' : 'Bloquear tarjeta'}
       </button>
     </article>
   )
