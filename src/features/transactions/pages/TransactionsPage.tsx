@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { TransactionTable } from '../components/TransactionTable'
-import { transactions } from '../mocks/transactions.mock'
+import { useTransactions } from '../hooks/useTransactions'
 import type { TransactionType } from '../types'
 
 type TransactionFilter = 'ALL' | TransactionType
@@ -18,28 +17,21 @@ const filters: Array<{
 ]
 
 export function TransactionsPage() {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<TransactionFilter>('ALL')
-
-  const filteredTransactions = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase()
-
-    return transactions.filter((transaction) => {
-      const matchesType =
-        filter === 'ALL' || transaction.type === filter
-
-      const matchesSearch =
-        !normalizedSearch ||
-        transaction.description
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        transaction.currency
-          .toLowerCase()
-          .includes(normalizedSearch)
-
-      return matchesType && matchesSearch
-    })
-  }, [filter, search])
+  const {
+    transactions,
+    loading,
+    error,
+    page,
+    totalPages,
+    totalItems,
+    type,
+    search,
+    setType,
+    setSearch,
+    nextPage,
+    prevPage,
+    refetch,
+  } = useTransactions({ initialLimit: 10 }) // Define aquí la cantidad de registros por página
 
   return (
     <section className="transactions-page">
@@ -60,16 +52,14 @@ export function TransactionsPage() {
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por descripción o moneda"
+            placeholder="Buscar por descripción..."
           />
         </label>
 
         <select
           aria-label="Filtrar movimientos"
-          value={filter}
-          onChange={(event) =>
-            setFilter(event.target.value as TransactionFilter)
-          }
+          value={type}
+          onChange={(event) => setType(event.target.value as TransactionFilter)}
         >
           {filters.map(({ label, value }) => (
             <option key={value} value={value}>
@@ -79,11 +69,47 @@ export function TransactionsPage() {
         </select>
       </section>
 
-      <TransactionTable transactions={filteredTransactions} />
+      {error && (
+        <div className="transactions-error">
+          <p>{error}</p>
+          <button type="button" onClick={refetch} className="btn-retry">
+            Reintentar
+          </button>
+        </div>
+      )}
+
+      <TransactionTable transactions={transactions} loading={loading} />
+
+      {/* Paginación */}
+      {!loading && !error && totalPages > 1 && (
+        <div className="transactions-pagination">
+          <button 
+            type="button" 
+            onClick={prevPage} 
+            disabled={page === 1}
+            className="pagination-btn"
+          >
+            Anterior
+          </button>
+          
+          <span className="pagination-info">
+            Página {page} de {totalPages}
+          </span>
+
+          <button 
+            type="button" 
+            onClick={nextPage} 
+            disabled={page === totalPages}
+            className="pagination-btn"
+          >
+            Siguiente
+          </button>
+        </div>
+      )}
 
       <p className="transactions-count">
-        {filteredTransactions.length}{' '}
-        {filteredTransactions.length === 1
+        {totalItems}{' '}
+        {totalItems === 1
           ? 'movimiento encontrado'
           : 'movimientos encontrados'}
       </p>

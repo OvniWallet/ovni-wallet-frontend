@@ -6,36 +6,36 @@ import type {
   RegisterResponse,
 } from '@/features/auth/types'
 
-const ACCESS_TOKEN_TTL_SECONDS = 7200
-
 export const authApi = {
   register: async (payload: RegisterRequest): Promise<RegisterResponse> => {
+    // Alianeamos los campos exactamente con el DTO esperado por el Backend
     const response = await httpClient.post('/auth/register', {
       email: payload.email,
       password: payload.password,
       first_name: payload.first_name,
       last_name: payload.last_name,
-      country_code: payload.country_of_residence,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      country_code: payload.country_code, // Aseguramos ISO-3 (ej. "ARG")
+      timezone: payload.timezone,
     })
 
+    // Suponiendo que el backend responde con { status: "success", data: { user: { id, email } } }
     const user = response.data.data.user
 
     return {
       user_id: user.id,
       email: user.email,
       wallet_id: undefined,
-    } as unknown as RegisterResponse
+    }
   },
 
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
     const response = await httpClient.post('/auth/login', credentials)
     const data = response.data.data
 
+    // Eliminamos la constante estática de TTL local para usar la respuesta directa del Backend
     return {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
-      expires_in: ACCESS_TOKEN_TTL_SECONDS,
     }
   },
 
@@ -48,7 +48,6 @@ export const authApi = {
     return {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
-      expires_in: ACCESS_TOKEN_TTL_SECONDS,
     }
   },
 

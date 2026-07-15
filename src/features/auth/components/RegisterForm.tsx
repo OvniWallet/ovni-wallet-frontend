@@ -41,7 +41,8 @@ export function RegisterForm() {
         last_name: lastName,
         email,
         password,
-        country_of_residence: country,
+       country_code: country,
+       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       })
 
       navigate('/login')

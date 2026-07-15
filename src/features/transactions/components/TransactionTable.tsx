@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Transaction } from '../types'
-import { getLatestTransactions } from '../mocks/transactions.mock'
 
 interface TransactionTableProps {
-  transactions?: Transaction[]
+  transactions?: Transaction[] 
   limit?: number
   showAllLink?: boolean
+  loading?: boolean
 }
 
 const transactionIcons: Record<string, string> = {
@@ -18,28 +17,13 @@ const transactionIcons: Record<string, string> = {
 }
 
 export function TransactionTable({
-  transactions,
+  transactions = [],
   limit,
   showAllLink = false,
+  loading = false,
 }: TransactionTableProps) {
-  const [history, setHistory] = useState<Transaction[]>(() =>
-    getLatestTransactions(),
-  )
-
-  useEffect(() => {
-    if (transactions) return
-
-    setHistory(getLatestTransactions())
-
-    const interval = setInterval(() => {
-      setHistory(getLatestTransactions())
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [transactions])
-
-  const source = transactions ?? history
-  const visibleTransactions = limit ? source.slice(0, limit) : source
+  
+  const visibleTransactions = limit ? transactions.slice(0, limit) : transactions
 
   return (
     <section className="transactions-section">
@@ -56,32 +40,47 @@ export function TransactionTable({
         )}
       </header>
 
-      <div className="transaction-list">
-        {visibleTransactions.map((transaction) => (
-          <article className="transaction-item" key={transaction.id}>
-            <span className="transaction-icon" aria-hidden="true">
-              {transactionIcons[transaction.type] ?? '•'}
-            </span>
+      {loading ? (
+        <div className="transactions-loading">
+          <p>Cargando movimientos...</p>
+        </div>
+      ) : (
+        <div className="transaction-list">
+          {visibleTransactions.length === 0 ? (
+            <p className="no-transactions">No hay movimientos registrados.</p>
+          ) : (
+            visibleTransactions.map((transaction) => {
+              // CLAVE: Nos aseguramos de que 'amount' sea un número válido antes de formatear
+              const safeAmount = typeof transaction?.amount === 'number' ? transaction.amount : 0
 
-            <p className="transaction-info">
-              <strong>{transaction.description}</strong>
-              <span>{transaction.type.replace(/_/g, ' ')}</span>
-            </p>
+              return (
+                <article className="transaction-item" key={transaction.id}>
+                  <span className="transaction-icon" aria-hidden="true">
+                    {transactionIcons[transaction.type] ?? '•'}
+                  </span>
 
-            <p className="transaction-value">
-              <strong>
-                {transaction.amount.toLocaleString('es-AR', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{' '}
-                {transaction.currency}
-              </strong>
+                  <p className="transaction-info">
+                    <strong>{transaction.description ?? 'Sin descripción'}</strong>
+                    <span>{(transaction.type ?? '').replace(/_/g, ' ')}</span>
+                  </p>
 
-              <small>{transaction.status}</small>
-            </p>
-          </article>
-        ))}
-      </div>
+                  <p className="transaction-value">
+                    <strong>
+                      {safeAmount.toLocaleString('es-AR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{' '}
+                      {transaction.currency ?? 'ARS'}
+                    </strong>
+
+                    <small>{transaction.status ?? 'PENDING'}</small>
+                  </p>
+                </article>
+              )
+            })
+          )}
+        </div>
+      )}
     </section>
   )
 }
