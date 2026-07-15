@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import type { Transaction } from '../types'
+import { getTransactionSummary } from '../lib/transactionSummary'
 
 interface TransactionTableProps {
-  transactions?: Transaction[] 
+  transactions?: Transaction[]
   limit?: number
   showAllLink?: boolean
   loading?: boolean
@@ -10,7 +11,6 @@ interface TransactionTableProps {
 
 const transactionIcons: Record<string, string> = {
   DEPOSIT: '↓',
-  WITHDRAWAL: '↑',
   EXCHANGE: '⇄',
   P2P_TRANSFER: '↗',
   CARD_SPEND: '▣',
@@ -22,7 +22,6 @@ export function TransactionTable({
   showAllLink = false,
   loading = false,
 }: TransactionTableProps) {
-  
   const visibleTransactions = limit ? transactions.slice(0, limit) : transactions
 
   return (
@@ -50,32 +49,36 @@ export function TransactionTable({
             <p className="no-transactions">No hay movimientos registrados.</p>
           ) : (
             visibleTransactions.map((transaction) => {
-              // CLAVE: Nos aseguramos de que 'amount' sea un número válido antes de formatear
-              const safeAmount = typeof transaction?.amount === 'number' ? transaction.amount : 0
+              const summary = getTransactionSummary(transaction)
 
               return (
-                <article className="transaction-item" key={transaction.id}>
+                <Link
+                  className="transaction-item"
+                  key={transaction.transaction_id}
+                  to={`/transactions/${transaction.transaction_id}`}
+                >
                   <span className="transaction-icon" aria-hidden="true">
                     {transactionIcons[transaction.type] ?? '•'}
                   </span>
 
                   <p className="transaction-info">
-                    <strong>{transaction.description ?? 'Sin descripción'}</strong>
-                    <span>{(transaction.type ?? '').replace(/_/g, ' ')}</span>
+                    <strong>{summary.description}</strong>
+                    <span>{transaction.type.replace(/_/g, ' ')}</span>
                   </p>
 
                   <p className="transaction-value">
                     <strong>
-                      {safeAmount.toLocaleString('es-AR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{' '}
-                      {transaction.currency ?? 'ARS'}
+                      {summary.amount !== null
+                        ? `${summary.amount.toLocaleString('es-AR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} ${summary.currency}`
+                        : '—'}
                     </strong>
 
-                    <small>{transaction.status ?? 'PENDING'}</small>
+                    <small>{transaction.status}</small>
                   </p>
-                </article>
+                </Link>
               )
             })
           )}

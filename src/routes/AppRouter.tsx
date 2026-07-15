@@ -4,6 +4,7 @@ import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { TransactionsPage } from '@/features/transactions/pages/TransactionsPage'
+import { TransactionDetailPage } from '@/features/transactions/pages/TransactionDetailPage'
 import { ExchangePage } from '@/features/exchange/pages/ExchangePage'
 import { CardsPage } from '@/features/virtual-cards/pages/CardsPage'
 import { ChatbotPage } from '@/features/chatbot/pages/ChatbotPage'
@@ -27,6 +28,7 @@ export function AppRouter() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/transactions/:id" element={<TransactionDetailPage />} />
             <Route path="/exchange" element={<ExchangePage />} />
             <Route path="/cards" element={<CardsPage />} />
             <Route path="/chatbot" element={<ChatbotPage />} />

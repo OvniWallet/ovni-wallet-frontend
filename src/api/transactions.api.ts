@@ -1,15 +1,12 @@
 import { httpClient } from './httpClient';
 import { generateIdempotencyKey } from '@/lib/idempotency';
-import type { Transaction } from '@/features/transactions/types';
+import type { Transaction, TransactionDetail } from '@/features/transactions/types';
 
-export interface PaginatedTransactionsResponse {
+export interface TransactionsPageResponse {
   status: string;
   data: {
     transactions: Transaction[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+    next_cursor: string | null;
   };
 }
 
@@ -27,16 +24,23 @@ export interface DepositResult {
 
 export const transactionsApi = {
   getTransactions: async (params: {
-    page: number;
     limit: number;
+    cursor?: string | null;
     type?: string;
-    search?: string;
-  }): Promise<PaginatedTransactionsResponse> => {
-    // Axios adjunta automáticamente los params a la URL como ?page=X&limit=Y
-    const response = await httpClient.get<PaginatedTransactionsResponse>('/transactions', {
-      params,
+  }): Promise<TransactionsPageResponse> => {
+    const response = await httpClient.get<TransactionsPageResponse>('/transactions', {
+      params: {
+        limit: params.limit,
+        cursor: params.cursor ?? undefined,
+        type: params.type,
+      },
     });
     return response.data;
+  },
+
+  getTransactionById: async (id: string): Promise<TransactionDetail> => {
+    const response = await httpClient.get(`/transactions/${id}`);
+    return response.data.data;
   },
 
   deposit: async (payload: DepositPayload): Promise<DepositResult> => {

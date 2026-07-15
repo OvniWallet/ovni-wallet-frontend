@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Search } from 'lucide-react'
 import { TransactionTable } from '../components/TransactionTable'
 import { DepositForm } from '../components/DepositForm'
 import { useTransactions } from '../hooks/useTransactions'
@@ -23,17 +22,14 @@ export function TransactionsPage() {
     transactions,
     loading,
     error,
-    page,
-    totalPages,
-    totalItems,
+    hasNext,
+    hasPrev,
     type,
-    search,
     setType,
-    setSearch,
     nextPage,
     prevPage,
     refetch,
-  } = useTransactions({ initialLimit: 10 }) // Define aquí la cantidad de registros por página
+  } = useTransactions({ initialLimit: 10 })
 
   const [showDeposit, setShowDeposit] = useState(false)
 
@@ -63,18 +59,6 @@ export function TransactionsPage() {
       </section>
 
       <section className="transactions-toolbar">
-        <label className="transactions-search" htmlFor="transactionSearch">
-          <Search size={18} aria-hidden="true" />
-
-          <input
-            id="transactionSearch"
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por descripción..."
-          />
-        </label>
-
         <select
           aria-label="Filtrar movimientos"
           value={type}
@@ -99,39 +83,17 @@ export function TransactionsPage() {
 
       <TransactionTable transactions={transactions} loading={loading} />
 
-      {/* Paginación */}
-      {!loading && !error && totalPages > 1 && (
+      {!loading && !error && (hasNext || hasPrev) && (
         <div className="transactions-pagination">
-          <button 
-            type="button" 
-            onClick={prevPage} 
-            disabled={page === 1}
-            className="pagination-btn"
-          >
+          <button type="button" onClick={prevPage} disabled={!hasPrev} className="pagination-btn">
             Anterior
           </button>
-          
-          <span className="pagination-info">
-            Página {page} de {totalPages}
-          </span>
 
-          <button 
-            type="button" 
-            onClick={nextPage} 
-            disabled={page === totalPages}
-            className="pagination-btn"
-          >
+          <button type="button" onClick={nextPage} disabled={!hasNext} className="pagination-btn">
             Siguiente
           </button>
         </div>
       )}
-
-      <p className="transactions-count">
-        {totalItems}{' '}
-        {totalItems === 1
-          ? 'movimiento encontrado'
-          : 'movimientos encontrados'}
-      </p>
     </section>
   )
 }
