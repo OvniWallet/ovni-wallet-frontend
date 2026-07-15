@@ -1,3 +1,5 @@
+import logoIcon from '@/assets/icons/logo-icon.png'
+
 export function DashboardHeader() {
   return (
     <section className="dashboard-hero">
@@ -14,7 +16,7 @@ export function DashboardHeader() {
         </div>
 
         <div className="dashboard-avatar" aria-hidden="true">
-          👽
+          <img src={logoIcon} alt="" />
         </div>
       </div>
 

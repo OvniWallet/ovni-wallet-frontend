@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-
+import { LandingPage } from '@/features/landing/pages/LandingPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
@@ -8,6 +8,7 @@ import { ExchangePage } from '@/features/exchange/pages/ExchangePage'
 import { CardsPage } from '@/features/virtual-cards/pages/CardsPage'
 import { ChatbotPage } from '@/features/chatbot/pages/ChatbotPage'
 import { P2PPage } from '@/features/p2p/pages/P2PPage'
+
 
 import { AppLayout } from '@/layouts/AppLayout'
 
@@ -18,6 +19,8 @@ export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
+        
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

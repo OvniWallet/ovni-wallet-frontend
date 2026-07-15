@@ -5,15 +5,18 @@ import { getApiError } from '@/api/errors'
 import { parseToCents } from '@/lib/money'
 
 const ERROR_MESSAGES: Record<string, string> = {
-  CANNOT_TRANSFER_TO_SELF: 'No puedes transferirte fondos a ti mismo.',
+  CANNOT_TRANSFER_TO_SELF: 'No podés transferirte fondos a vos mismo.',
   RECIPIENT_NOT_FOUND: 'El usuario destinatario no está registrado.',
-  INSUFFICIENT_FUNDS: 'No tienes saldo suficiente en esa divisa.',
+  INSUFFICIENT_FUNDS: 'No tenés saldo suficiente en esa moneda.',
   BALANCE_CONFIGURATION_ERROR: 'Hay un problema con la configuración de divisas de una de las cuentas.',
-  INVALID_INPUT: 'Revisa los datos ingresados.',
+  INVALID_INPUT: 'Revisá los datos ingresados.',
 }
+
+type TransferMode = 'send' | 'receive'
 
 export function P2PPage() {
   const navigate = useNavigate()
+  const [mode, setMode] = useState<TransferMode>('send')
   const [email, setEmail] = useState('')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState<P2PCurrency>('USD')
@@ -21,15 +24,15 @@ export function P2PPage() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
-  const handleTransfer = async (e: FormEvent) => {
-    e.preventDefault()
+  const handleTransfer = async (event: FormEvent) => {
+    event.preventDefault()
     setError('')
 
     if (!email || !amount) return
 
     const amountInCents = parseToCents(amount)
     if (amountInCents === null) {
-      setError('Ingresa un monto válido mayor a cero.')
+      setError('Ingresá un monto válido mayor a cero.')
       return
     }
 
@@ -41,7 +44,6 @@ export function P2PPage() {
         amount_in_cents: amountInCents,
         currency,
       })
-
       setSuccess(true)
       setTimeout(() => navigate('/dashboard'), 2000)
     } catch (err) {
@@ -53,68 +55,163 @@ export function P2PPage() {
   }
 
   return (
-    <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
-      <form className="auth-card" onSubmit={handleTransfer} style={{ width: '100%', maxWidth: '400px' }}>
-        <h1>Enviar Dinero </h1>
+    <section className="p2p-page">
+      <header className="page-heading">
+        <p>Transferencias P2P</p>
+        <h1>Mové dinero entre usuarios de Ovni Wallet.</h1>
+        <span>Elegí si querés enviar saldo o consultar tus datos para recibirlo.</span>
+      </header>
 
-        {success ? (
-          <div style={{ textAlign: 'center', padding: '1rem', color: '#10B981' }}>
-            <p>¡Transferencia enviada con éxito!</p>
-            <p style={{ fontSize: '0.85rem', color: '#6B7280' }}>Redirigiendo al panel...</p>
-          </div>
-        ) : (
-          <>
-            <label htmlFor="recipient">Email del destinatario</label>
-            <input
-              id="recipient"
-              type="email"
-              placeholder="amigo@correo.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <label htmlFor="amount">Monto</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                id="amount"
-                type="number"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                style={{ flex: 1 }}
-              />
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as P2PCurrency)}
-                style={{ padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #D1D5DB' }}
+      {mode === 'send' ? (
+        <div className="p2p-layout">
+          <div className="p2p-main-column">
+            <div className="p2p-tabs" role="tablist" aria-label="Tipo de transferencia">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={true}
+                className="p2p-tab p2p-tab-active" 
+                onClick={() => setMode('send')}
               >
-                <option value="USD">USD</option>
-                <option value="ARS">ARS</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="BRL">BRL</option>
-                <option value="JPY">JPY</option>
-              </select>
+                Enviar dinero
+              </button>
+
+              <button
+                type="button"
+                role="tab"
+                aria-selected={false}
+                className="p2p-tab" 
+                onClick={() => setMode('receive')}
+              >
+                Recibir dinero
+              </button>
             </div>
 
-            {error && <p role="alert" style={{ color: '#DC2626' }}>{error}</p>}
+            <form className="p2p-card" onSubmit={handleTransfer}>
+            <div>
+              <p className="section-eyebrow">Enviar saldo</p>
+              <h2>Completá los datos del destinatario.</h2>
+            </div>
 
-            <button className="auth-button" type="submit" disabled={loading} style={{ marginTop: '1.5rem' }}>
-              {loading ? 'Procesando envío...' : `Enviar ${amount || '0'} ${currency}`}
+            {success ? (
+              <div className="p2p-success">
+                <strong>¡Transferencia enviada con éxito!</strong>
+                <span>Te estamos redirigiendo al panel.</span>
+              </div>
+            ) : (
+              <>
+                <label htmlFor="recipient">
+                  <span>Email del destinatario</span>
+                  <input
+                    id="recipient"
+                    type="email"
+                    placeholder="amigo@correo.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                  />
+                </label>
+
+                <label htmlFor="transferAmount">
+                  <span>Monto</span>
+                  <span className="p2p-amount-control">
+                    <input
+                      id="transferAmount"
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={amount}
+                      onChange={(event) => setAmount(event.target.value)}
+                      required
+                    />
+
+                    <select
+                      aria-label="Moneda"
+                      value={currency}
+                      onChange={(event) => setCurrency(event.target.value as P2PCurrency)}
+                    >
+                      <option value="USD">USD</option>
+                      <option value="ARS">ARS</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="BRL">BRL</option>
+                      <option value="JPY">JPY</option>
+                    </select>
+                  </span>
+                </label>
+
+                {error && <p className="form-message form-message-error" role="alert">{error}</p>}
+
+                <button className="primary-action-button" type="submit" disabled={loading}>
+                  {loading ? 'Procesando envío...' : `Enviar ${amount || '0'} ${currency}`}
+                </button>
+
+                <button className="text-action-button" type="button" onClick={() => navigate('/dashboard')}>
+                  Cancelar
+                </button>
+              </>
+            )}
+            </form>
+          </div>
+
+          <aside className="p2p-info-card">
+            <p>Transferencias seguras</p>
+            <h2>Revisá los datos antes de confirmar.</h2>
+            <ul>
+              <li>Verificá el correo del destinatario.</li>
+              <li>Elegí la moneda correcta.</li>
+              <li>La operación quedará registrada en Movimientos.</li>
+            </ul>
+          </aside>
+        </div>
+      ) : (
+        <div className="p2p-main-column">
+          <div className="p2p-tabs" role="tablist" aria-label="Tipo de transferencia">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              className="p2p-tab" 
+              onClick={() => setMode('send')}
+            >
+              Enviar dinero
             </button>
 
             <button
               type="button"
-              onClick={() => navigate('/dashboard')}
-              style={{ background: 'none', border: 'none', color: '#3B82F6', marginTop: '1rem', cursor: 'pointer', width: '100%' }}
+              role="tab"
+              aria-selected={true}
+              className="p2p-tab p2p-tab-active" 
+              onClick={() => setMode('receive')}
             >
-              Cancelar
+              Recibir dinero
             </button>
-          </>
-        )}
-      </form>
-    </div>
+          </div>
+
+          <section className="receive-card">
+          <div className="receive-content">
+            <p className="section-eyebrow">Recibir saldo</p>
+            <h2>Compartí tus datos para recibir dinero.</h2>
+            <p>
+              Por ahora podés utilizar el correo asociado a tu cuenta. El código QR se incorporará cuando el backend defina el identificador de cobro.
+            </p>
+
+            <div className="receive-data">
+              <span>Dato de recepción</span>
+              <strong>Tu correo registrado en Ovni Wallet</strong>
+            </div>
+          </div>
+
+          <div className="receive-qr-placeholder" aria-label="Código QR pendiente">
+            <span aria-hidden="true">▦</span>
+            <strong>QR próximamente</strong>
+            <small>Preparado para la integración del equipo.</small>
+          </div>
+          </section>
+        </div>
+      )}
+    </section>
   )
 }

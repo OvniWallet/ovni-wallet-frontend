@@ -1,10 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { Bot } from 'lucide-react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import logoIcon from '@/assets/icons/logo-icon.png'
 
 const navigation = [
   { label: 'Inicio', path: '/dashboard', symbol: '⌂' },
   { label: 'Transferir', path: '/p2p', symbol: '↗' },
-  { label: 'Exchange', path: '/exchange', symbol: '⇄' },
+  { label: 'Cambio', path: '/exchange', symbol: '⇄' },
   { label: 'Tarjetas', path: '/cards', symbol: '▣' },
   { label: 'Movimientos', path: '/transactions', symbol: '≡' },
   { label: 'Asistente', path: '/chatbot', symbol: '◇' },
@@ -17,10 +19,7 @@ export function AppLayout() {
     <div className="app-shell">
       <aside className="desktop-sidebar">
         <div className="sidebar-brand">
-          <span className="sidebar-logo" aria-hidden="true">
-            👽
-          </span>
-
+          <img className="sidebar-logo" src={logoIcon} alt="" aria-hidden="true" />
           <div>
             <strong>Ovni Wallet</strong>
             <small>Billetera digital</small>
@@ -50,19 +49,27 @@ export function AppLayout() {
       <div className="app-content">
         <header className="mobile-header">
           <div className="mobile-brand">
-            <span aria-hidden="true">👽</span>
+            <img className="mobile-logo" src={logoIcon} alt="" aria-hidden="true" />
             <strong>Ovni Wallet</strong>
           </div>
 
-          <button type="button" onClick={logout}>
-            Salir
-          </button>
+          <button type="button" onClick={logout}>Salir</button>
         </header>
 
-        <main className="app-main">
-          <Outlet />
-        </main>
+        <main className="app-main"><Outlet /></main>
       </div>
+
+      <NavLink
+        className={({ isActive }) =>
+          isActive
+            ? 'mobile-chatbot-button mobile-chatbot-button-active'
+            : 'mobile-chatbot-button'
+        }
+        to="/chatbot"
+        aria-label="Abrir asistente"
+      >
+        <Bot size={24} />
+      </NavLink>
 
       <nav className="mobile-navigation" aria-label="Navegación móvil">
         {navigation.slice(0, 5).map(({ label, path, symbol }) => (
@@ -70,9 +77,7 @@ export function AppLayout() {
             key={path}
             to={path}
             className={({ isActive }) =>
-              isActive
-                ? 'mobile-nav-item mobile-nav-item-active'
-                : 'mobile-nav-item'
+              isActive ? 'mobile-nav-item mobile-nav-item-active' : 'mobile-nav-item'
             }
           >
             <span aria-hidden="true">{symbol}</span>
@@ -82,4 +87,4 @@ export function AppLayout() {
       </nav>
     </div>
   )
-} 
+}

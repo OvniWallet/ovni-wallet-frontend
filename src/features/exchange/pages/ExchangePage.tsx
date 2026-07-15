@@ -1,5 +1,9 @@
 import { useState } from 'react'
-import { exchangeApi, type ExchangeCurrency, type ExchangeQuoteResponse } from '@/api/exchange.api'
+import {
+  exchangeApi,
+  type ExchangeCurrency,
+  type ExchangeQuoteResponse,
+} from '@/api/exchange.api'
 import { getApiError } from '@/api/errors'
 import { parseToCents, formatMoney } from '@/lib/money'
 
@@ -21,11 +25,12 @@ export function ExchangePage() {
     const cents = parseToCents(amount)
 
     if (cents === null) {
-      setError('Ingresa un monto válido mayor a cero.')
+      setError('Ingresá un monto válido mayor a cero.')
       return
     }
 
     setLoadingQuote(true)
+
     try {
       const result = await exchangeApi.getQuote({
         source_currency: sourceCurrency,
@@ -67,72 +72,115 @@ export function ExchangePage() {
   }
 
   return (
-    <section style={{ padding: '2rem', maxWidth: '420px' }}>
-      <h2>Exchange</h2>
-      <p>Convierte tus monedas de forma rápida.</p>
+    <section className="exchange-page">
+      <header className="page-heading">
+        <p>Cambio de moneda</p>
+        <h1>Convertí tus saldos de forma simple.</h1>
+        <span>Consultá la cotización antes de confirmar la operación.</span>
+      </header>
 
-      <label htmlFor="sourceCurrency">Desde</label>
-      <select
-        id="sourceCurrency"
-        value={sourceCurrency}
-        onChange={(e) => setSourceCurrency(e.target.value as ExchangeCurrency)}
-      >
-        {CURRENCIES.map((c) => (
-          <option key={c} value={c}>{c}</option>
-        ))}
-      </select>
+      <div className="exchange-layout">
+        <section className="exchange-card">
+          <div className="exchange-currency-row">
+            <label>
+              <span>Desde</span>
+              <select
+                value={sourceCurrency}
+                onChange={(event) => {
+                  setSourceCurrency(event.target.value as ExchangeCurrency)
+                  setQuote(null)
+                }}
+              >
+                {CURRENCIES.map((currency) => (
+                  <option key={currency} value={currency}>{currency}</option>
+                ))}
+              </select>
+            </label>
 
-      <label htmlFor="targetCurrency">Hacia</label>
-      <select
-        id="targetCurrency"
-        value={targetCurrency}
-        onChange={(e) => setTargetCurrency(e.target.value as ExchangeCurrency)}
-      >
-        {CURRENCIES.map((c) => (
-          <option key={c} value={c}>{c}</option>
-        ))}
-      </select>
+            <span className="exchange-arrow" aria-hidden="true">⇄</span>
 
-      <label htmlFor="amount">Monto a convertir</label>
-      <input
-        id="amount"
-        type="number"
-        placeholder="0.00"
-        value={amount}
-        onChange={(e) => {
-          setAmount(e.target.value)
-          setQuote(null)
-        }}
-      />
+            <label>
+              <span>Hacia</span>
+              <select
+                value={targetCurrency}
+                onChange={(event) => {
+                  setTargetCurrency(event.target.value as ExchangeCurrency)
+                  setQuote(null)
+                }}
+              >
+                {CURRENCIES.map((currency) => (
+                  <option key={currency} value={currency}>{currency}</option>
+                ))}
+              </select>
+            </label>
+          </div>
 
-      {error && <p role="alert" style={{ color: '#DC2626' }}>{error}</p>}
+          <label className="exchange-amount-field" htmlFor="amount">
+            <span>Monto a convertir</span>
+            <span className="exchange-amount-control">
+              <input
+                id="amount"
+                type="number"
+                inputMode="decimal"
+                min="0"
+                step="0.01"
+                placeholder="0,00"
+                value={amount}
+                onChange={(event) => {
+                  setAmount(event.target.value)
+                  setQuote(null)
+                  setSuccess(false)
+                }}
+              />
+              <strong>{sourceCurrency}</strong>
+            </span>
+          </label>
 
-      {quote && (
-        <div style={{ margin: '1rem 0', padding: '0.75rem', border: '1px solid #D1D5DB', borderRadius: '0.5rem' }}>
-          <p>Recibirás: <strong>{formatMoney(quote.target_amount_cents, targetCurrency)}</strong></p>
-          <p style={{ fontSize: '0.85rem', color: '#6B7280' }}>Tasa: {quote.rate_value}</p>
-          {quote.rate_is_stale && (
-            <p style={{ fontSize: '0.85rem', color: '#D97706' }}>
-              ⚠️ Esta tasa proviene de caché (puede no estar 100% actualizada).
-            </p>
+          {error && <p className="form-message form-message-error" role="alert">{error}</p>}
+          {success && <p className="form-message form-message-success">¡Conversión realizada con éxito!</p>}
+
+          {quote && (
+            <section className="exchange-quote">
+              <p>Vas a recibir</p>
+              <strong>{formatMoney(quote.target_amount_cents, targetCurrency)}</strong>
+              <span>1 {sourceCurrency} = {quote.rate_value} {targetCurrency}</span>
+              {quote.rate_is_stale && (
+                <small>La cotización proviene de caché y puede no estar completamente actualizada.</small>
+              )}
+            </section>
           )}
-        </div>
-      )}
 
-      {success && <p style={{ color: '#10B981' }}>¡Intercambio realizado con éxito!</p>}
+          <div className="exchange-actions">
+            <button
+              className="secondary-action-button"
+              type="button"
+              onClick={handleQuote}
+              disabled={loadingQuote || !amount}
+            >
+              {loadingQuote ? 'Consultando...' : 'Consultar cotización'}
+            </button>
 
-      <button type="button" onClick={handleQuote} disabled={loadingQuote || !amount}>
-        {loadingQuote ? 'Cotizando...' : 'Cotizar'}
-      </button>
+            <button
+              className="primary-action-button"
+              type="button"
+              onClick={handleExchange}
+              disabled={!quote || loadingExchange}
+            >
+              {loadingExchange ? 'Procesando...' : 'Confirmar conversión'}
+            </button>
+          </div>
+        </section>
 
-      <button
-        type="button"
-        onClick={handleExchange}
-        disabled={!quote || loadingExchange}
-        style={{ marginLeft: '0.5rem' }}
-      >
-        {loadingExchange ? 'Procesando...' : 'Realizar intercambio'}
-      </button>
+        <aside className="exchange-info-card">
+          <p>Conversión transparente</p>
+          <h2>Revisá siempre la cotización antes de operar.</h2>
+          <ul>
+            <li>Elegí la moneda de origen y destino.</li>
+            <li>Ingresá el monto que querés convertir.</li>
+            <li>Confirmá únicamente después de revisar el resultado.</li>
+          </ul>
+        </aside>
+      </div>
     </section>
   )
 }
