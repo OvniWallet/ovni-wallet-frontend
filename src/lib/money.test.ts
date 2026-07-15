@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest'
+﻿import { describe, expect, it } from 'vitest'
 import { formatMoney, parseToCents } from './money'
 
 describe('formatMoney', () => {
   it('convierte centavos enteros a un string de moneda con 2 decimales', () => {
-    expect(formatMoney(1050, 'USD')).toMatch(/US\$\s+10[,\.]\s*50/)
+    // formatMoney uses es-CO locale internally, which formats with space + comma decimal separator, not '$10.50'
+    expect(formatMoney(1050, 'USD')).toBe('US$ 10,50')
   })
 })
 
@@ -21,3 +22,4 @@ describe('parseToCents', () => {
     expect(parseToCents('abc')).toBeNull()
   })
 })
+
