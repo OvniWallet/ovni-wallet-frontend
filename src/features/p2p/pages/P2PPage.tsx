@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { p2pApi, type P2PCurrency } from '@/api/p2p.api'
 import { getApiError } from '@/api/errors'
-import { parseToCents } from '@/lib/money'
+import { parseToCents, formatMoney } from '@/lib/money'
 
 const ERROR_MESSAGES: Record<string, string> = {
   CANNOT_TRANSFER_TO_SELF: 'No puedes transferirte fondos a ti mismo.',
@@ -12,28 +12,37 @@ const ERROR_MESSAGES: Record<string, string> = {
   INVALID_INPUT: 'Revisa los datos ingresados.',
 }
 
+type Step = 'FORM' | 'CONFIRM' | 'DONE'
+
 export function P2PPage() {
   const navigate = useNavigate()
+  const [step, setStep] = useState<Step>('FORM')
   const [email, setEmail] = useState('')
   const [amount, setAmount] = useState('')
   const [currency, setCurrency] = useState<P2PCurrency>('USD')
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
-  const handleTransfer = async (e: FormEvent) => {
+  const handleReview = (e: FormEvent) => {
     e.preventDefault()
     setError('')
 
     if (!email || !amount) return
 
-    const amountInCents = parseToCents(amount)
-    if (amountInCents === null) {
+    if (parseToCents(amount) === null) {
       setError('Ingresa un monto válido mayor a cero.')
       return
     }
 
+    setStep('CONFIRM')
+  }
+
+  const handleConfirm = async () => {
+    const amountInCents = parseToCents(amount)
+    if (amountInCents === null) return
+
     setLoading(true)
+    setError('')
 
     try {
       await p2pApi.transfer({
@@ -42,11 +51,12 @@ export function P2PPage() {
         currency,
       })
 
-      setSuccess(true)
+      setStep('DONE')
       setTimeout(() => navigate('/dashboard'), 2000)
     } catch (err) {
       const { code, message } = getApiError(err)
       setError(ERROR_MESSAGES[code] ?? message)
+      setStep('FORM')
     } finally {
       setLoading(false)
     }
@@ -54,16 +64,18 @@ export function P2PPage() {
 
   return (
     <div style={{ padding: '2rem', display: 'flex', justifyContent: 'center' }}>
-      <form className="auth-card" onSubmit={handleTransfer} style={{ width: '100%', maxWidth: '400px' }}>
-        <h1>Enviar Dinero </h1>
+      <div className="auth-card" style={{ width: '100%', maxWidth: '400px' }}>
+        <h1>Enviar Dinero</h1>
 
-        {success ? (
+        {step === 'DONE' && (
           <div style={{ textAlign: 'center', padding: '1rem', color: '#10B981' }}>
             <p>¡Transferencia enviada con éxito!</p>
             <p style={{ fontSize: '0.85rem', color: '#6B7280' }}>Redirigiendo al panel...</p>
           </div>
-        ) : (
-          <>
+        )}
+
+        {step === 'FORM' && (
+          <form onSubmit={handleReview}>
             <label htmlFor="recipient">Email del destinatario</label>
             <input
               id="recipient"
@@ -101,8 +113,8 @@ export function P2PPage() {
 
             {error && <p role="alert" style={{ color: '#DC2626' }}>{error}</p>}
 
-            <button className="auth-button" type="submit" disabled={loading} style={{ marginTop: '1.5rem' }}>
-              {loading ? 'Procesando envío...' : `Enviar ${amount || '0'} ${currency}`}
+            <button className="auth-button" type="submit" style={{ marginTop: '1.5rem' }}>
+              Revisar envío
             </button>
 
             <button
@@ -112,9 +124,47 @@ export function P2PPage() {
             >
               Cancelar
             </button>
-          </>
+          </form>
         )}
-      </form>
+
+        {step === 'CONFIRM' && (
+          <div>
+            <p>Confirmá los datos antes de enviar:</p>
+
+            <dl>
+              <div>
+                <dt>Destinatario</dt>
+                <dd>{email}</dd>
+              </div>
+              <div>
+                <dt>Monto</dt>
+                <dd>{formatMoney(parseToCents(amount) ?? 0, currency)}</dd>
+              </div>
+            </dl>
+
+            {error && <p role="alert" style={{ color: '#DC2626' }}>{error}</p>}
+
+            <button
+              className="auth-button"
+              type="button"
+              onClick={handleConfirm}
+              disabled={loading}
+              style={{ marginTop: '1rem' }}
+            >
+              {loading ? 'Procesando envío...' : 'Confirmar y enviar'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep('FORM')}
+              disabled={loading}
+              style={{ background: 'none', border: 'none', color: '#3B82F6', marginTop: '1rem', cursor: 'pointer', width: '100%' }}
+            >
+              Editar datos
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
