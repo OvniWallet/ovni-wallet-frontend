@@ -1,4 +1,5 @@
 import { httpClient } from './httpClient'
+import { STORAGE_KEYS } from '@/constants/storage-keys'
 import type {
   LoginRequest,
   LoginResponse,
@@ -32,10 +33,10 @@ export const authApi = {
     const response = await httpClient.post('/auth/login', credentials)
     const data = response.data.data
 
-    // Eliminamos la constante estática de TTL local para usar la respuesta directa del Backend
     return {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
+      user: data.user,
     }
   },
 
@@ -52,7 +53,7 @@ export const authApi = {
   },
 
   logout: async (): Promise<void> => {
-    const refreshToken = localStorage.getItem('refresh_token')
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
     if (!refreshToken) return
     await httpClient.post('/auth/logout', { refresh_token: refreshToken })
   },

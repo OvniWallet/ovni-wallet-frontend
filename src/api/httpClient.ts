@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ENV } from '../config/env';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 export const httpClient = axios.create({
   // Dejamos únicamente ENV.API_URL ya que tu entorno ya cuenta con el prefijo /api/v1
@@ -11,7 +12,7 @@ export const httpClient = axios.create({
 
 httpClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
