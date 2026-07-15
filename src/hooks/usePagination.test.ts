@@ -12,7 +12,7 @@ describe('usePagination', () => {
   it('carga la primera página al montar', async () => {
     fetchPage.mockResolvedValue({ items: ['a', 'b'], nextCursor: 'cursor-1' })
 
-    const { result } = renderHook(() => usePagination(fetchPage))
+    const { result } = renderHook(() => usePagination(fetchPage as any))
 
     await waitFor(() => expect(result.current.loading).toBe(false))
 
@@ -27,7 +27,7 @@ describe('usePagination', () => {
       .mockResolvedValueOnce({ items: ['a'], nextCursor: 'cursor-1' })
       .mockResolvedValueOnce({ items: ['b'], nextCursor: null })
 
-    const { result } = renderHook(() => usePagination(fetchPage))
+    const { result } = renderHook(() => usePagination(fetchPage as any))
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     await act(async () => {
@@ -53,7 +53,7 @@ describe('usePagination', () => {
   it('expone el error si fetchPage rechaza', async () => {
     fetchPage.mockRejectedValue(new Error('boom'))
 
-    const { result } = renderHook(() => usePagination(fetchPage))
+    const { result } = renderHook(() => usePagination(fetchPage as any))
 
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(result.current.error).toBe('boom')
