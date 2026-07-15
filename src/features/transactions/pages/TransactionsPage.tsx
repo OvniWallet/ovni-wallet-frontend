@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Search } from 'lucide-react'
 import { TransactionTable } from '../components/TransactionTable'
+import { DepositForm } from '../components/DepositForm'
 import { useTransactions } from '../hooks/useTransactions'
 import type { TransactionType } from '../types'
 
@@ -33,6 +35,8 @@ export function TransactionsPage() {
     refetch,
   } = useTransactions({ initialLimit: 10 }) // Define aquí la cantidad de registros por página
 
+  const [showDeposit, setShowDeposit] = useState(false)
+
   return (
     <section className="transactions-page">
       <header className="page-heading">
@@ -42,6 +46,21 @@ export function TransactionsPage() {
           Consultá y filtrá las operaciones realizadas en tu cuenta.
         </span>
       </header>
+
+      <section className="transactions-deposit-toggle">
+        <button type="button" onClick={() => setShowDeposit((prev) => !prev)}>
+          {showDeposit ? 'Cerrar' : 'Depositar dinero'}
+        </button>
+
+        {showDeposit && (
+          <DepositForm
+            onSuccess={() => {
+              setShowDeposit(false)
+              refetch()
+            }}
+          />
+        )}
+      </section>
 
       <section className="transactions-toolbar">
         <label className="transactions-search" htmlFor="transactionSearch">
