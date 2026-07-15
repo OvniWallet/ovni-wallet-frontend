@@ -32,7 +32,7 @@ describe('createRefreshInterceptor', () => {
   })
 
   it('re-lanza errores que no son 401 sin tocar nada', async () => {
-    const handler = createRefreshInterceptor(client as any, deps)
+    const handler = createRefreshInterceptor(client as any, deps as any)
     const error = makeAxiosError(500, '/wallets/balance')
 
     await expect(handler(error)).rejects.toBe(error)
@@ -40,7 +40,7 @@ describe('createRefreshInterceptor', () => {
   })
 
   it('no reintenta si el 401 viene del propio /auth/refresh (evita loop infinito)', async () => {
-    const handler = createRefreshInterceptor(client as any, deps)
+    const handler = createRefreshInterceptor(client as any, deps as any)
     const error = makeAxiosError(401, '/auth/refresh')
 
     await expect(handler(error)).rejects.toBe(error)
@@ -48,7 +48,7 @@ describe('createRefreshInterceptor', () => {
   })
 
   it('en un 401 normal: pide refresh, guarda los tokens nuevos y reintenta la request original', async () => {
-    const handler = createRefreshInterceptor(client as any, deps)
+    const handler = createRefreshInterceptor(client as any, deps as any)
     const error = makeAxiosError(401, '/wallets/balance')
 
     const result = await handler(error)
@@ -69,7 +69,7 @@ describe('createRefreshInterceptor', () => {
 
   it('si el refresh falla, limpia la sesión y re-lanza el error original', async () => {
     deps.refresh.mockRejectedValue(new Error('refresh token expirado'))
-    const handler = createRefreshInterceptor(client as any, deps)
+    const handler = createRefreshInterceptor(client as any, deps as any)
     const error = makeAxiosError(401, '/wallets/balance')
 
     await expect(handler(error)).rejects.toBe(error)
@@ -79,7 +79,7 @@ describe('createRefreshInterceptor', () => {
 
   it('si no hay refresh token guardado, limpia la sesión sin llamar al backend', async () => {
     deps.getRefreshToken.mockReturnValue(null)
-    const handler = createRefreshInterceptor(client as any, deps)
+    const handler = createRefreshInterceptor(client as any, deps as any)
     const error = makeAxiosError(401, '/wallets/balance')
 
     await expect(handler(error)).rejects.toBe(error)
@@ -88,7 +88,7 @@ describe('createRefreshInterceptor', () => {
   })
 
   it('si dos requests fallan con 401 en paralelo, solo dispara un refresh (comparten la misma promesa)', async () => {
-    const handler = createRefreshInterceptor(client as any, deps)
+    const handler = createRefreshInterceptor(client as any, deps as any)
     const errorA = makeAxiosError(401, '/wallets/balance')
     const errorB = makeAxiosError(401, '/transactions')
 
