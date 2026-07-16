@@ -1,17 +1,27 @@
-import { CreditCard, Lock, Unlock } from 'lucide-react'
+import { CreditCard, Lock } from 'lucide-react'
 import type { VirtualCardData } from '../types'
 
 interface VirtualCardProps {
   card: VirtualCardData
   loading: boolean
+  selected: boolean
+  onSelect: () => void
   onToggleStatus: () => void
 }
 
-export function VirtualCard({ card, loading, onToggleStatus }: VirtualCardProps) {
+export function VirtualCard({ card, loading, selected, onSelect, onToggleStatus }: VirtualCardProps) {
   const isBlocked = card.status === 'BLOCKED'
 
+  const className = [
+    'virtual-card',
+    isBlocked ? 'virtual-card-blocked' : '',
+    selected ? 'virtual-card-selected' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <article className={isBlocked ? 'virtual-card virtual-card-blocked' : 'virtual-card'}>
+    <article className={className} onClick={onSelect} role="button" tabIndex={0}>
       <header className="virtual-card-header">
         <span className="virtual-card-brand">
           <span aria-hidden="true">👽</span>
@@ -32,15 +42,20 @@ export function VirtualCard({ card, loading, onToggleStatus }: VirtualCardProps)
 
       <p className="virtual-card-status">{isBlocked ? 'Tarjeta bloqueada' : 'Tarjeta activa'}</p>
 
-      <button
-        className="secondary-button virtual-card-action"
-        type="button"
-        onClick={onToggleStatus}
-        disabled={loading}
-      >
-        {isBlocked ? <Unlock size={18} /> : <Lock size={18} />}
-        {loading ? 'Actualizando...' : isBlocked ? 'Desbloquear tarjeta' : 'Bloquear tarjeta'}
-      </button>
+      {!isBlocked && (
+        <button
+          className="secondary-button virtual-card-action"
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation()
+            onToggleStatus()
+          }}
+          disabled={loading}
+        >
+          <Lock size={18} />
+          {loading ? 'Actualizando...' : 'Bloquear tarjeta'}
+        </button>
+      )}
     </article>
   )
 }
