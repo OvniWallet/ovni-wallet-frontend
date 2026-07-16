@@ -1,66 +1,117 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ShoppingBag } from 'lucide-react'
 import { VirtualCard } from '../components/VirtualCard'
-import { virtualCardsService } from '../services/virtual-cards.service'
+import { virtualCardsApi } from '@/api/virtualCards.api'
+import { getApiError } from '@/api/errors'
+import { parseToCents } from '@/lib/money'
 import type { VirtualCardData } from '../types'
 
 export function CardsPage() {
-  const [card, setCard] = useState<VirtualCardData | null>(null)
+  const [cards, setCards] = useState<VirtualCardData[]>([])
+  const [loadingCards, setLoadingCards] = useState(true)
   const [merchant, setMerchant] = useState('')
   const [amount, setAmount] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
-  useEffect(() => {
-    virtualCardsService.getCard().then(setCard)
-  }, [])
+  const loadCards = () => {
+    setLoadingCards(true)
+    virtualCardsApi
+      .getCards()
+      .then(setCards)
+      .catch((err) => setError(getApiError(err).message))
+      .finally(() => setLoadingCards(false))
+  }
+
+  useEffect(loadCards, [])
+
+  const card = cards[0] ?? null
+
+  const handleCreateCard = async () => {
+    setActionLoading(true)
+    setError('')
+
+    try {
+      await virtualCardsApi.createCard({ currency_default: 'USD' })
+      loadCards()
+    } catch (err) {
+      setError(getApiError(err).message)
+    } finally {
+      setActionLoading(false)
+    }
+  }
 
   const handleToggleStatus = async () => {
     if (!card) return
 
-    setLoading(true)
+    setActionLoading(true)
     setMessage('')
+    setError('')
 
     try {
-      const updatedCard = await virtualCardsService.updateStatus({
-        cardId: card.id,
-        status: card.status === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE',
-      })
-
-      setCard(updatedCard)
+      if (card.status === 'ACTIVE') {
+        await virtualCardsApi.blockCard(card.card_id)
+      }
+      loadCards()
+    } catch (err) {
+      setError(getApiError(err).message)
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
   }
 
   const handleSpend = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!card || !merchant.trim()) return
 
-    if (!card || !merchant.trim() || Number(amount) <= 0) return
+    const amountInCents = parseToCents(amount)
+    if (amountInCents === null) {
+      setError('Ingresá un monto válido mayor a cero.')
+      return
+    }
 
-    setLoading(true)
+    setActionLoading(true)
     setMessage('')
+    setError('')
 
     try {
-      const response = await virtualCardsService.simulateSpend({
-        cardId: card.id,
-        amount: Number(amount),
-        currency: card.currency,
-        merchant,
+      const response = await virtualCardsApi.simulateSpend({
+        card_id: card.card_id,
+        amount_in_cents: amountInCents,
+        currency: card.currency_default,
+        merchant_name: merchant,
       })
 
       setMessage(
-        response.status === 'COMPLETED'
-          ? 'Compra simulada correctamente.'
-          : 'La operación fue rechazada.',
+        response.status === 'COMPLETED' ? 'Compra simulada correctamente.' : 'La operación fue rechazada.',
       )
+    } catch (err) {
+      setError(getApiError(err).message)
     } finally {
-      setLoading(false)
+      setActionLoading(false)
     }
   }
 
-  if (!card) {
+  if (loadingCards) {
     return <p className="page-state">Cargando tarjeta virtual...</p>
+  }
+
+  if (!card) {
+    return (
+      <section className="cards-page">
+        <header className="page-heading">
+          <p>Tarjetas virtuales</p>
+          <h1>Todavía no tenés una tarjeta</h1>
+        </header>
+
+        {error && <p role="alert">{error}</p>}
+
+        <button type="button" onClick={handleCreateCard} disabled={actionLoading}>
+          {actionLoading ? 'Creando...' : 'Emitir tarjeta virtual'}
+        </button>
+      </section>
+    )
   }
 
   return (
@@ -68,16 +119,12 @@ export function CardsPage() {
       <header className="page-heading">
         <p>Tarjetas virtuales</p>
         <h1>Administrá tu tarjeta</h1>
-        <span>
-          Controlá su estado y probá consumos antes de conectarla al backend.
-        </span>
+        <span>Controlá su estado y probá consumos.</span>
       </header>
 
-      <VirtualCard
-        card={card}
-        loading={loading}
-        onToggleStatus={handleToggleStatus}
-      />
+      {error && <p role="alert">{error}</p>}
+
+      <VirtualCard card={card} loading={actionLoading} onToggleStatus={handleToggleStatus} />
 
       <form className="form-card card-spend-form" onSubmit={handleSpend}>
         <header className="form-heading">
@@ -109,12 +156,11 @@ export function CardsPage() {
 
         {message && <p className="form-message">{message}</p>}
 
-        <button type="submit" disabled={loading || card.status === 'BLOCKED'}>
+        <button type="submit" disabled={actionLoading || card.status === 'BLOCKED'}>
           <ShoppingBag size={18} />
-
           {card.status === 'BLOCKED'
             ? 'Tarjeta bloqueada'
-            : loading
+            : actionLoading
               ? 'Procesando compra...'
               : 'Simular compra'}
         </button>

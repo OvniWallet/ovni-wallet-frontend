@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
 import { TransactionTable } from '../components/TransactionTable'
-import { transactions } from '../mocks/transactions.mock'
+import { DepositForm } from '../components/DepositForm'
+import { useTransactions } from '../hooks/useTransactions'
+import { getTransactionSummary } from '../lib/transactionSummary'
 import type { TransactionType } from '../types'
 
 type TransactionFilter = 'ALL' | TransactionType
+type CurrencyFilter = 'ALL' | string
 
 const filters: Array<{
   label: string
@@ -18,28 +20,37 @@ const filters: Array<{
 ]
 
 export function TransactionsPage() {
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState<TransactionFilter>('ALL')
+  const {
+    transactions,
+    loading,
+    error,
+    hasNext,
+    hasPrev,
+    type,
+    setType,
+    nextPage,
+    prevPage,
+    refetch,
+  } = useTransactions({ initialLimit: 10 })
 
-  const filteredTransactions = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase()
+  const [showDeposit, setShowDeposit] = useState(false)
+  const [currency, setCurrency] = useState<CurrencyFilter>('ALL')
 
-    return transactions.filter((transaction) => {
-      const matchesType =
-        filter === 'ALL' || transaction.type === filter
-
-      const matchesSearch =
-        !normalizedSearch ||
-        transaction.description
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        transaction.currency
-          .toLowerCase()
-          .includes(normalizedSearch)
-
-      return matchesType && matchesSearch
+  const currencies = useMemo(() => {
+    const found = new Set<string>()
+    transactions.forEach((transaction) => {
+      const transactionCurrency = getTransactionSummary(transaction).currency
+      if (transactionCurrency) found.add(transactionCurrency)
     })
-  }, [filter, search])
+    return Array.from(found).sort()
+  }, [transactions])
+
+  const visibleTransactions = useMemo(() => {
+    if (currency === 'ALL') return transactions
+    return transactions.filter(
+      (transaction) => getTransactionSummary(transaction).currency === currency,
+    )
+  }, [transactions, currency])
 
   return (
     <section className="transactions-page">
@@ -51,25 +62,26 @@ export function TransactionsPage() {
         </span>
       </header>
 
-      <section className="transactions-toolbar">
-        <label className="transactions-search" htmlFor="transactionSearch">
-          <Search size={18} aria-hidden="true" />
+      <section className="transactions-deposit-toggle">
+        <button type="button" onClick={() => setShowDeposit((prev) => !prev)}>
+          {showDeposit ? 'Cerrar' : 'Depositar dinero'}
+        </button>
 
-          <input
-            id="transactionSearch"
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Buscar por descripción o moneda"
+        {showDeposit && (
+          <DepositForm
+            onSuccess={() => {
+              setShowDeposit(false)
+              refetch()
+            }}
           />
-        </label>
+        )}
+      </section>
 
+      <section className="transactions-toolbar">
         <select
           aria-label="Filtrar movimientos"
-          value={filter}
-          onChange={(event) =>
-            setFilter(event.target.value as TransactionFilter)
-          }
+          value={type}
+          onChange={(event) => setType(event.target.value as TransactionFilter)}
         >
           {filters.map(({ label, value }) => (
             <option key={value} value={value}>
@@ -77,16 +89,48 @@ export function TransactionsPage() {
             </option>
           ))}
         </select>
+
+        <select
+          aria-label="Filtrar por moneda"
+          value={currency}
+          onChange={(event) => setCurrency(event.target.value)}
+        >
+          <option value="ALL">Todas las monedas</option>
+          {currencies.map((currencyCode) => (
+            <option key={currencyCode} value={currencyCode}>{currencyCode}</option>
+          ))}
+        </select>
       </section>
 
-      <TransactionTable transactions={filteredTransactions} />
+      {error && (
+        <div className="transactions-error">
+          <p>{error}</p>
+          <button type="button" onClick={refetch} className="btn-retry">
+            Reintentar
+          </button>
+        </div>
+      )}
 
-      <p className="transactions-count">
-        {filteredTransactions.length}{' '}
-        {filteredTransactions.length === 1
-          ? 'movimiento encontrado'
-          : 'movimientos encontrados'}
-      </p>
+      <TransactionTable transactions={visibleTransactions} loading={loading} />
+
+      {!loading && !error && (
+        <p className="transactions-count">
+          {visibleTransactions.length}{' '}
+          {visibleTransactions.length === 1 ? 'movimiento encontrado' : 'movimientos encontrados'}
+        </p>
+      )}
+
+      {!loading && !error && (hasNext || hasPrev) && (
+        <div className="transactions-pagination">
+          <button type="button" onClick={prevPage} disabled={!hasPrev} className="pagination-btn">
+            Anterior
+          </button>
+
+          <button type="button" onClick={nextPage} disabled={!hasNext} className="pagination-btn">
+            Siguiente
+          </button>
+        </div>
+      )}
     </section>
   )
 }

@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
+.env.*
+!.env.example
 
 # Editor directories and files
 .vscode/*
@@ -23,3 +26,9 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Claude Code / Superpowers (artefactos locales del asistente, no van al remoto)
+.claude/
+.superpowers/
+CLAUDE.md
+docs/superpowers/

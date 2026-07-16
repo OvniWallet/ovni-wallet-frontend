@@ -1,35 +1,25 @@
 export type VirtualCardStatus = 'ACTIVE' | 'BLOCKED'
 
 export interface VirtualCardData {
-  id: string
-  cardholderName: string
-  maskedNumber: string
-  expirationDate: string
+  card_id: string
+  masked_number: string
   status: VirtualCardStatus
-  currency: string
+  currency_default: string
 }
 
 export interface CreateVirtualCardRequest {
-  currency: string
-}
-
-export interface CreateVirtualCardResponse {
-  card: VirtualCardData
-}
-
-export interface UpdateVirtualCardStatusRequest {
-  cardId: string
-  status: VirtualCardStatus
+  currency_default: string
 }
 
 export interface SimulateCardSpendRequest {
-  cardId: string
-  amount: number
+  card_id: string
+  amount_in_cents: number
   currency: string
-  merchant: string
+  merchant_name: string
+  idempotency_key?: string
 }
 
 export interface SimulateCardSpendResponse {
-  transactionId: string
-  status: 'COMPLETED' | 'REJECTED'
+  transaction_id: string
+  status: 'COMPLETED' | 'FAILED'
 }

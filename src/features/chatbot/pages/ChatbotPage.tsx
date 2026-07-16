@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
+import { Bot, MessageCircleQuestion, Send, User } from 'lucide-react'
 import { chatbotApi } from '@/api/chatbot.api'
 import { getApiError } from '@/api/errors'
+import { suggestedQuestions } from '../mocks/chatbot.mock'
 
 interface ChatEntry {
   role: 'user' | 'assistant' | 'system'
@@ -39,37 +41,86 @@ export function ChatbotPage() {
   }
 
   return (
-    <section style={{ padding: '2rem', maxWidth: '480px' }}>
-      <h2>Asistente Virtual</h2>
-      <p>Bienvenido. ¿En qué puedo ayudarte hoy?</p>
+    <section className="chat-page">
+      <aside className="chat-guide">
+        <span className="chat-guide-icon" aria-hidden="true">
+          <MessageCircleQuestion size={26} />
+        </span>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '1rem 0', minHeight: '120px' }}>
-        {messages.map((entry, i) => (
-          <p
-            key={i}
-            style={{
-              alignSelf: entry.role === 'user' ? 'flex-end' : 'flex-start',
-              color: entry.role === 'system' ? '#DC2626' : 'inherit',
-            }}
+        <h1>¿Cómo puedo ayudarte?</h1>
+
+        <p>
+          Consultá información general sobre las funciones de Ovni Wallet.
+        </p>
+
+        <ul>
+          {suggestedQuestions.map((question) => (
+            <li key={question}>{question}</li>
+          ))}
+        </ul>
+      </aside>
+
+      <section className="chat-card">
+        <header className="chat-header">
+          <span className="chat-header-icon" aria-hidden="true">
+            <Bot size={22} />
+          </span>
+
+          <span>
+            <strong>Asistente Ovni</strong>
+            <small>{loading ? 'Escribiendo...' : 'Disponible'}</small>
+          </span>
+        </header>
+
+        <section className="chat-history" aria-live="polite">
+          {messages.map((entry, i) => {
+            const isUser = entry.role === 'user'
+
+            return (
+              <article
+                key={i}
+                className={
+                  isUser
+                    ? 'chat-message chat-message-user'
+                    : 'chat-message chat-message-assistant'
+                }
+              >
+                <span className="chat-avatar" aria-hidden="true">
+                  {isUser ? <User size={18} /> : <Bot size={18} />}
+                </span>
+
+                <p style={entry.role === 'system' ? { color: '#DC2626' } : undefined}>
+                  {entry.text}
+                </p>
+              </article>
+            )
+          })}
+
+          {loading && (
+            <p className="chat-typing">
+              El asistente está preparando una respuesta...
+            </p>
+          )}
+        </section>
+
+        <form className="chat-form" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Escribí tu consulta..."
+            aria-label="Consulta para el asistente"
+          />
+
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            aria-label="Enviar consulta"
           >
-            {entry.text}
-          </p>
-        ))}
-        {loading && <p style={{ color: '#6B7280' }}>Pensando...</p>}
-      </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '0.5rem' }}>
-        <input
-          type="text"
-          placeholder="Escribe tu consulta..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          style={{ flex: 1 }}
-        />
-        <button type="submit" disabled={loading}>
-          Enviar
-        </button>
-      </form>
+            <Send size={19} />
+          </button>
+        </form>
+      </section>
     </section>
   )
 }

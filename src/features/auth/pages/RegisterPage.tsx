@@ -1,18 +1,18 @@
 import { RegisterForm } from '../components/RegisterForm'
+import logoHorizontal from '@/assets/icons/logo-horizontal.png'
 
 export function RegisterPage() {
   return (
     <main className="auth-page">
       <section className="auth-panel">
-        <div className="brand">
-          <span className="brand-logo" aria-hidden="true">
-            👽
-          </span>
+        <div className="brand auth-brand">
+          <img
+            className="auth-brand-logo"
+            src={logoHorizontal}
+            alt="Ovni Wallet"
+          />
 
-          <div>
-            <strong>Ovni Wallet</strong>
-            <p>Tu dinero, siempre bajo control.</p>
-          </div>
+          <p>Tu dinero, siempre bajo control.</p>
         </div>
 
         <RegisterForm />

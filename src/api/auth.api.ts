@@ -1,4 +1,5 @@
 import { httpClient } from './httpClient'
+import { STORAGE_KEYS } from '@/constants/storage-keys'
 import type {
   LoginRequest,
   LoginResponse,
@@ -6,26 +7,26 @@ import type {
   RegisterResponse,
 } from '@/features/auth/types'
 
-const ACCESS_TOKEN_TTL_SECONDS = 7200
-
 export const authApi = {
   register: async (payload: RegisterRequest): Promise<RegisterResponse> => {
+    // Alianeamos los campos exactamente con el DTO esperado por el Backend
     const response = await httpClient.post('/auth/register', {
       email: payload.email,
       password: payload.password,
       first_name: payload.first_name,
       last_name: payload.last_name,
-      country_code: payload.country_of_residence,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      country_code: payload.country_code, // Aseguramos ISO-3 (ej. "ARG")
+      timezone: payload.timezone,
     })
 
+    // Suponiendo que el backend responde con { status: "success", data: { user: { id, email } } }
     const user = response.data.data.user
 
     return {
       user_id: user.id,
       email: user.email,
       wallet_id: undefined,
-    } as unknown as RegisterResponse
+    }
   },
 
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
@@ -35,7 +36,7 @@ export const authApi = {
     return {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
-      expires_in: ACCESS_TOKEN_TTL_SECONDS,
+      user: data.user,
     }
   },
 
@@ -48,12 +49,11 @@ export const authApi = {
     return {
       access_token: data.access_token,
       refresh_token: data.refresh_token,
-      expires_in: ACCESS_TOKEN_TTL_SECONDS,
     }
   },
 
   logout: async (): Promise<void> => {
-    const refreshToken = localStorage.getItem('refresh_token')
+    const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
     if (!refreshToken) return
     await httpClient.post('/auth/logout', { refresh_token: refreshToken })
   },

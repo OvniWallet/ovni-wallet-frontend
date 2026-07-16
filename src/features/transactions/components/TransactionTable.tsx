@@ -1,45 +1,28 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Transaction } from '../types'
-import { getLatestTransactions } from '../mocks/transactions.mock'
+import { getTransactionSummary } from '../lib/transactionSummary'
 
 interface TransactionTableProps {
   transactions?: Transaction[]
   limit?: number
   showAllLink?: boolean
+  loading?: boolean
 }
 
 const transactionIcons: Record<string, string> = {
   DEPOSIT: '↓',
-  WITHDRAWAL: '↑',
   EXCHANGE: '⇄',
   P2P_TRANSFER: '↗',
   CARD_SPEND: '▣',
 }
 
 export function TransactionTable({
-  transactions,
+  transactions = [],
   limit,
   showAllLink = false,
+  loading = false,
 }: TransactionTableProps) {
-  const [history, setHistory] = useState<Transaction[]>(() =>
-    getLatestTransactions(),
-  )
-
-  useEffect(() => {
-    if (transactions) return
-
-    setHistory(getLatestTransactions())
-
-    const interval = setInterval(() => {
-      setHistory(getLatestTransactions())
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [transactions])
-
-  const source = transactions ?? history
-  const visibleTransactions = limit ? source.slice(0, limit) : source
+  const visibleTransactions = limit ? transactions.slice(0, limit) : transactions
 
   return (
     <section className="transactions-section">
@@ -56,32 +39,51 @@ export function TransactionTable({
         )}
       </header>
 
-      <div className="transaction-list">
-        {visibleTransactions.map((transaction) => (
-          <article className="transaction-item" key={transaction.id}>
-            <span className="transaction-icon" aria-hidden="true">
-              {transactionIcons[transaction.type] ?? '•'}
-            </span>
+      {loading ? (
+        <div className="transactions-loading">
+          <p>Cargando movimientos...</p>
+        </div>
+      ) : (
+        <div className="transaction-list">
+          {visibleTransactions.length === 0 ? (
+            <p className="no-transactions">No hay movimientos registrados.</p>
+          ) : (
+            visibleTransactions.map((transaction) => {
+              const summary = getTransactionSummary(transaction)
 
-            <p className="transaction-info">
-              <strong>{transaction.description}</strong>
-              <span>{transaction.type.replace(/_/g, ' ')}</span>
-            </p>
+              return (
+                <Link
+                  className="transaction-item"
+                  key={transaction.transaction_id}
+                  to={`/transactions/${transaction.transaction_id}`}
+                >
+                  <span className="transaction-icon" aria-hidden="true">
+                    {transactionIcons[transaction.type] ?? '•'}
+                  </span>
 
-            <p className="transaction-value">
-              <strong>
-                {transaction.amount.toLocaleString('es-AR', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{' '}
-                {transaction.currency}
-              </strong>
+                  <p className="transaction-info">
+                    <strong>{summary.description}</strong>
+                    <span>{transaction.type.replace(/_/g, ' ')}</span>
+                  </p>
 
-              <small>{transaction.status}</small>
-            </p>
-          </article>
-        ))}
-      </div>
+                  <p className="transaction-value">
+                    <strong>
+                      {summary.amount !== null
+                        ? `${summary.amount.toLocaleString('es-AR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} ${summary.currency}`
+                        : '—'}
+                    </strong>
+
+                    <small>{transaction.status}</small>
+                  </p>
+                </Link>
+              )
+            })
+          )}
+        </div>
+      )}
     </section>
   )
 }
