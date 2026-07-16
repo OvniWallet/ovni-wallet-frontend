@@ -21,7 +21,18 @@ export function VirtualCard({ card, loading, selected, onSelect, onToggleStatus 
     .join(' ')
 
   return (
-    <article className={className} onClick={onSelect} role="button" tabIndex={0}>
+    <article
+      className={className}
+      onClick={onSelect}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onSelect()
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <header className="virtual-card-header">
         <span className="virtual-card-brand">
           <span aria-hidden="true">👽</span>
