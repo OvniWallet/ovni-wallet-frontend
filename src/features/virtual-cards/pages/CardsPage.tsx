@@ -101,7 +101,7 @@ export function CardsPage() {
         )}
       </div>
 
-      {selectedCard && <CardSpendForm card={selectedCard} />}
+      {selectedCard && <CardSpendForm key={selectedCard.card_id} card={selectedCard} />}
     </section>
   )
 }
