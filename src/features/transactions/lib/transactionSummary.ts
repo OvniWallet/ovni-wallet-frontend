@@ -1,5 +1,26 @@
 import type { Transaction, TransactionType } from '../types'
 
+export interface TransactionCounterparty {
+  originLabel: string
+  destinationLabel: string
+}
+
+export interface TransactionAdditionalInfoItem {
+  label: string
+  value: string
+}
+
+export interface TransactionGeolocation {
+  latitude: number
+  longitude: number
+}
+
+export interface TransactionDetailInfo {
+  counterparty: TransactionCounterparty | null
+  additionalInfo: TransactionAdditionalInfoItem[]
+  geolocation: TransactionGeolocation | null
+}
+
 const TYPE_FALLBACK_DESCRIPTION: Record<TransactionType, string> = {
   DEPOSIT: 'Depósito',
   P2P_TRANSFER: 'Transferencia P2P',
@@ -52,4 +73,85 @@ export function getTransactionSummary(transaction: Transaction): TransactionSumm
     currency: null,
     description: TYPE_FALLBACK_DESCRIPTION[transaction.type],
   }
+}
+
+/**
+ * Extrae, sin inventar datos, lo que cada tipo de transacción realmente
+ * guarda en `metadata` para el comprobante de detalle. No hay endpoint que
+ * resuelva IDs de usuario a nombres, así que en P2P solo distinguimos
+ * "Vos" del otro lado comparando contra el usuario autenticado.
+ */
+export function getTransactionDetailInfo(
+  transaction: Transaction,
+  currentUserId: string | null,
+): TransactionDetailInfo {
+  const metadata = transaction.metadata as Record<string, unknown> | null
+
+  return {
+    counterparty: getCounterparty(transaction, metadata, currentUserId),
+    additionalInfo: getAdditionalInfo(transaction, metadata),
+    geolocation: getGeolocation(metadata),
+  }
+}
+
+function getGeolocation(metadata: Record<string, unknown> | null): TransactionGeolocation | null {
+  const latitude = typeof metadata?.latitude === 'number' ? metadata.latitude : null
+  const longitude = typeof metadata?.longitude === 'number' ? metadata.longitude : null
+
+  if (latitude === null || longitude === null) return null
+
+  return { latitude, longitude }
+}
+
+function getCounterparty(
+  transaction: Transaction,
+  metadata: Record<string, unknown> | null,
+  currentUserId: string | null,
+): TransactionCounterparty | null {
+  if (transaction.type !== 'P2P_TRANSFER') return null
+
+  const senderId = typeof metadata?.senderId === 'string' ? metadata.senderId : null
+  const recipientId = typeof metadata?.recipientId === 'string' ? metadata.recipientId : null
+
+  if (!senderId || !recipientId) return null
+
+  const label = (userId: string) => (currentUserId && userId === currentUserId ? 'Vos' : 'Otro usuario')
+
+  return {
+    originLabel: label(senderId),
+    destinationLabel: label(recipientId),
+  }
+}
+
+function getAdditionalInfo(
+  transaction: Transaction,
+  metadata: Record<string, unknown> | null,
+): TransactionAdditionalInfoItem[] {
+  if (transaction.type === 'CARD_SPEND') {
+    const items: TransactionAdditionalInfoItem[] = []
+    const merchant = typeof metadata?.merchant_name === 'string' ? metadata.merchant_name : null
+
+    if (merchant) items.push({ label: 'Comercio', value: merchant })
+    if (typeof metadata?.triggered_by_exchange_transaction_id === 'string') {
+      items.push({ label: 'Conversión de moneda', value: 'Se convirtió saldo automáticamente para cubrir la compra.' })
+    }
+
+    return items
+  }
+
+  if (transaction.type === 'EXCHANGE') {
+    const requestPayload = metadata?.request_payload as Record<string, unknown> | undefined
+    const items: TransactionAdditionalInfoItem[] = []
+
+    if (typeof requestPayload?.source_currency === 'string') {
+      items.push({ label: 'Divisa de origen', value: requestPayload.source_currency })
+    }
+    if (typeof requestPayload?.target_currency === 'string') {
+      items.push({ label: 'Divisa de destino', value: requestPayload.target_currency })
+    }
+
+    return items
+  }
+
+  return []
 }
