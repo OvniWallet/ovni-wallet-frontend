@@ -3,6 +3,7 @@ import { TransactionTable } from '../components/TransactionTable'
 import { DepositForm } from '../components/DepositForm'
 import { useTransactions } from '../hooks/useTransactions'
 import { getTransactionSummary } from '../lib/transactionSummary'
+import { useWalletBalance } from '@/features/wallets/hooks/useWalletBalance'
 import type { TransactionType } from '../types'
 
 type TransactionFilter = 'ALL' | TransactionType
@@ -36,14 +37,16 @@ export function TransactionsPage() {
   const [showDeposit, setShowDeposit] = useState(false)
   const [currency, setCurrency] = useState<CurrencyFilter>('ALL')
 
+  const { balances } = useWalletBalance()
+
+  // Las divisas del filtro salen de la wallet real del usuario (todas las que
+  // tiene configuradas), no solo de las que aparecen en la página de
+  // movimientos ya cargada — así no se pierden opciones cuando los tipos
+  // EXCHANGE/CARD_SPEND (que no exponen moneda en el listado) dominan la
+  // página actual.
   const currencies = useMemo(() => {
-    const found = new Set<string>()
-    transactions.forEach((transaction) => {
-      const transactionCurrency = getTransactionSummary(transaction).currency
-      if (transactionCurrency) found.add(transactionCurrency)
-    })
-    return Array.from(found).sort()
-  }, [transactions])
+    return balances.map((b) => b.currency).sort()
+  }, [balances])
 
   const visibleTransactions = useMemo(() => {
     if (currency === 'ALL') return transactions
