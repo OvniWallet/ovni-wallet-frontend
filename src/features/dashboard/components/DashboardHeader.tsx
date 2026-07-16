@@ -1,6 +1,19 @@
 import logoIcon from '@/assets/icons/logo-icon.png'
+import { useWalletBalance } from '@/features/wallets/hooks/useWalletBalance';
 
 export function DashboardHeader() {
+  const { balance, currency, loading, error } = useWalletBalance();
+
+  // Formateador de moneda dinámico
+  const formatBalance = (value: number | null, curr: string) => {
+    if (value === null) return '$ 0,00';
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: curr,
+      minimumFractionDigits: 2,
+    }).format(value);
+  };
+
   return (
     <section className="dashboard-hero">
       <div className="dashboard-hero-top">
@@ -23,10 +36,16 @@ export function DashboardHeader() {
       <div className="dashboard-balance">
         <small>Balance total</small>
 
-        <strong>$ 185.430,25</strong>
+        {loading ? (
+          <strong style={{ fontSize: '1.5rem', opacity: 0.7 }}>Cargando balance...</strong>
+        ) : error ? (
+          <strong style={{ fontSize: '1.2rem', color: '#ef4444' }}>{error}</strong>
+        ) : (
+          <strong>{formatBalance(balance, currency)}</strong>
+        )}
 
-        <p>▲ +12,5 % respecto al último mes</p>
+        <p>▲ Actualizado en tiempo real</p>
       </div>
     </section>
-  )
+  );
 }

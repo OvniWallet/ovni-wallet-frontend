@@ -1,6 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { useAuth } from '../hooks/useAuth'
+
+const LOGIN_ERROR_MESSAGES: Record<number, string> = {
+  401: 'Correo o contraseña incorrectos.',
+  403: 'No tenés permisos para acceder a esta cuenta.',
+}
 
 export function LoginForm() {
   const navigate = useNavigate()
@@ -22,8 +28,15 @@ export function LoginForm() {
     try {
       await login({ email, password })
       navigate('/dashboard')
-    } catch {
-      setError('No se pudo iniciar sesión. Verificá tus datos.')
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status) {
+        setError(
+          LOGIN_ERROR_MESSAGES[err.response.status] ??
+            'No se pudo iniciar sesión. Verificá tus datos.',
+        )
+      } else {
+        setError('No se pudo iniciar sesión. Verificá tu conexión e intentá nuevamente.')
+      }
     }
   }
 

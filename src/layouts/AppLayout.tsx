@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { Bot } from 'lucide-react'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import logoIcon from '@/assets/icons/logo-icon.png'
@@ -14,6 +14,8 @@ const navigation = [
 
 export function AppLayout() {
   const { logout } = useAuth()
+  const { pathname } = useLocation()
+  const isChatbotRoute = pathname.startsWith('/chatbot')
 
   return (
     <div className="app-shell">
@@ -59,17 +61,15 @@ export function AppLayout() {
         <main className="app-main"><Outlet /></main>
       </div>
 
-      <NavLink
-        className={({ isActive }) =>
-          isActive
-            ? 'mobile-chatbot-button mobile-chatbot-button-active'
-            : 'mobile-chatbot-button'
-        }
-        to="/chatbot"
-        aria-label="Abrir asistente"
-      >
-        <Bot size={24} />
-      </NavLink>
+      {!isChatbotRoute && (
+        <NavLink
+          className="mobile-chatbot-button"
+          to="/chatbot"
+          aria-label="Abrir asistente"
+        >
+          <Bot size={24} />
+        </NavLink>
+      )}
 
       <nav className="mobile-navigation" aria-label="Navegación móvil">
         {navigation.slice(0, 5).map(({ label, path, symbol }) => (

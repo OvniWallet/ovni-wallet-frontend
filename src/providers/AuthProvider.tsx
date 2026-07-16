@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode, useState } from 'react'
 import { AuthContext } from '@/contexts/AuthContext'
 import { authService } from '@/features/auth/services/auth.service'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { STORAGE_KEYS } from '@/constants/storage-keys'
 import type {
   LoginRequest,
   LoginResponse,
@@ -14,10 +16,10 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useLocalStorage<User | null>(STORAGE_KEYS.USER, null)
   const [loading, setLoading] = useState(false)
 
-  const isAuthenticated = Boolean(localStorage.getItem('access_token'))
+  const isAuthenticated = Boolean(localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN))
 
   const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
     setLoading(true)
@@ -25,8 +27,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const response = await authService.login(credentials)
 
-      localStorage.setItem('access_token', response.access_token)
-      localStorage.setItem('refresh_token', response.refresh_token)
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.access_token)
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, response.refresh_token)
+      if (response.user) {
+        setUser(response.user)
+      }
 
       return response
     } finally {
@@ -52,8 +57,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authService.logout()
     } finally {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
       setUser(null)
       setLoading(false)
     }

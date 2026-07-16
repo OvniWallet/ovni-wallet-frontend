@@ -10,11 +10,20 @@ export type TransactionStatus =
   | 'REVERSED'
 
 export interface Transaction {
-  id: string
+  transaction_id: string
   type: TransactionType
   status: TransactionStatus
-  amount: number
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
+
+export interface LedgerEntryDetail {
+  id: string
+  type: 'DEBIT' | 'CREDIT'
+  amount_in_cents: number
   currency: string
-  description: string
-  createdAt: string
+}
+
+export interface TransactionDetail extends Transaction {
+  ledger_entries: LedgerEntryDetail[]
 }

@@ -1,130 +1,123 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Bot, Send } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { Bot, MessageCircleQuestion, Send, User } from 'lucide-react'
 import { chatbotApi } from '@/api/chatbot.api'
 import { getApiError } from '@/api/errors'
+import { suggestedQuestions } from '../mocks/chatbot.mock'
 
 interface ChatEntry {
   role: 'user' | 'assistant' | 'system'
   text: string
 }
 
-const quickQuestions = [
-  '¿Cómo envío dinero?',
-  '¿Cómo convierto monedas?',
-  '¿Dónde veo mis movimientos?',
-  '¿Cómo funcionan las tarjetas virtuales?',
-]
-
 export function ChatbotPage() {
-  const [messages, setMessages] = useState<ChatEntry[]>([
-    {
-      role: 'assistant',
-      text: 'Hola, soy el asistente de Ovni Wallet. Puedo ayudarte con transferencias, cambios de moneda, tarjetas y movimientos.',
-    },
-  ])
+  const [messages, setMessages] = useState<ChatEntry[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const element = scrollRef.current
-    if (element) element.scrollTop = element.scrollHeight
-  }, [loading, messages])
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!input.trim()) return
 
-  const sendMessage = async (message: string) => {
-    const cleanMessage = message.trim()
-    if (!cleanMessage || loading) return
-
-    setMessages((current) => [...current, { role: 'user', text: cleanMessage }])
+    const userMessage = input
+    setMessages((prev) => [...prev, { role: 'user', text: userMessage }])
     setInput('')
     setLoading(true)
 
     try {
-      const result = await chatbotApi.sendMessage(cleanMessage)
-      setMessages((current) => [...current, { role: 'assistant', text: result.reply }])
+      const result = await chatbotApi.sendMessage(userMessage)
+      setMessages((prev) => [...prev, { role: 'assistant', text: result.reply }])
     } catch (err) {
       const { code } = getApiError(err)
+
       const friendlyMessage =
         code === 'UNKNOWN_ERROR'
-          ? 'El asistente todavía no está disponible. Intentá nuevamente cuando el backend esté conectado.'
-          : 'El asistente está temporalmente degradado. Intentá más tarde.'
+          ? 'El asistente todavía no está disponible (backend pendiente).'
+          : 'El asistente está temporalmente degradado. Intenta más tarde.'
 
-      setMessages((current) => [...current, { role: 'system', text: friendlyMessage }])
+      setMessages((prev) => [...prev, { role: 'system', text: friendlyMessage }])
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault()
-    await sendMessage(input)
-  }
-
   return (
-    <section className="chatbot-page">
-      <aside className="chatbot-help">
-        <span className="chatbot-help-icon" aria-hidden="true"><Bot size={24} /></span>
+    <section className="chat-page">
+      <aside className="chat-guide">
+        <span className="chat-guide-icon" aria-hidden="true">
+          <MessageCircleQuestion size={26} />
+        </span>
 
-        <div>
-          <p className="section-eyebrow">Asistente Ovni</p>
-          <h1>¿Cómo puedo ayudarte?</h1>
-          <span>Consultá información general sobre las funciones de Ovni Wallet.</span>
-        </div>
+        <h1>¿Cómo puedo ayudarte?</h1>
 
-        <div className="chatbot-suggestions">
-          {quickQuestions.map((question) => (
-            <button
-              key={question}
-              type="button"
-              disabled={loading}
-              onClick={() => sendMessage(question)}
-            >
-              {question}
-            </button>
+        <p>
+          Consultá información general sobre las funciones de Ovni Wallet.
+        </p>
+
+        <ul>
+          {suggestedQuestions.map((question) => (
+            <li key={question}>{question}</li>
           ))}
-        </div>
+        </ul>
       </aside>
 
-      <section className="chat-window">
-        <header className="chat-window-header">
-          <span aria-hidden="true"><Bot size={22} /></span>
-          <div>
+      <section className="chat-card">
+        <header className="chat-header">
+          <span className="chat-header-icon" aria-hidden="true">
+            <Bot size={22} />
+          </span>
+
+          <span>
             <strong>Asistente Ovni</strong>
-            <small>Disponible</small>
-          </div>
+            <small>{loading ? 'Escribiendo...' : 'Disponible'}</small>
+          </span>
         </header>
 
-        <div className="chat-messages" ref={scrollRef}>
-          {messages.map((entry, index) => (
-            <article
-              key={`${entry.role}-${index}`}
-              className={`chat-message chat-message-${entry.role}`}
-            >
-              {entry.role !== 'user' && (
-                <span aria-hidden="true"><Bot size={17} /></span>
-              )}
-              <p>{entry.text}</p>
-            </article>
-          ))}
+        <section className="chat-history" aria-live="polite">
+          {messages.map((entry, i) => {
+            const isUser = entry.role === 'user'
+
+            return (
+              <article
+                key={i}
+                className={
+                  isUser
+                    ? 'chat-message chat-message-user'
+                    : 'chat-message chat-message-assistant'
+                }
+              >
+                <span className="chat-avatar" aria-hidden="true">
+                  {isUser ? <User size={18} /> : <Bot size={18} />}
+                </span>
+
+                <p style={entry.role === 'system' ? { color: '#DC2626' } : undefined}>
+                  {entry.text}
+                </p>
+              </article>
+            )
+          })}
 
           {loading && (
-            <article className="chat-message chat-message-assistant">
-              <span aria-hidden="true"><Bot size={17} /></span>
-              <p>Pensando...</p>
-            </article>
+            <p className="chat-typing">
+              El asistente está preparando una respuesta...
+            </p>
           )}
-        </div>
+        </section>
 
-        <form className="chat-composer" onSubmit={handleSubmit}>
+        <form className="chat-form" onSubmit={handleSubmit}>
           <input
             type="text"
-            placeholder="Escribí tu consulta..."
             value={input}
-            onChange={(event) => setInput(event.target.value)}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Escribí tu consulta..."
+            aria-label="Consulta para el asistente"
           />
 
-          <button type="submit" disabled={loading || !input.trim()} aria-label="Enviar consulta">
-            <Send size={20} />
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            aria-label="Enviar consulta"
+          >
+            <Send size={19} />
           </button>
         </form>
       </section>
