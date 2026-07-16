@@ -77,8 +77,9 @@ export function getTransactionSummary(transaction: Transaction): TransactionSumm
 
 /**
  * Extrae, sin inventar datos, lo que cada tipo de transacción realmente
- * guarda en `metadata` para el comprobante de detalle. No hay endpoint que
- * resuelva IDs de usuario a nombres, así que en P2P solo distinguimos
+ * guarda en `metadata` para el comprobante de detalle. El backend resuelve
+ * sender_name/recipient_name para P2P (ver transactions.service.ts); si por
+ * algún motivo no vinieran (transacciones previas al cambio), se distingue
  * "Vos" del otro lado comparando contra el usuario autenticado.
  */
 export function getTransactionDetailInfo(
@@ -115,11 +116,18 @@ function getCounterparty(
 
   if (!senderId || !recipientId) return null
 
-  const label = (userId: string) => (currentUserId && userId === currentUserId ? 'Vos' : 'Otro usuario')
+  const senderName = typeof metadata?.sender_name === 'string' ? metadata.sender_name : null
+  const recipientName = typeof metadata?.recipient_name === 'string' ? metadata.recipient_name : null
+
+  const label = (userId: string, name: string | null) => {
+    const isCurrentUser = Boolean(currentUserId) && userId === currentUserId
+    if (name) return isCurrentUser ? `${name} (Vos)` : name
+    return isCurrentUser ? 'Vos' : 'Otro usuario'
+  }
 
   return {
-    originLabel: label(senderId),
-    destinationLabel: label(recipientId),
+    originLabel: label(senderId, senderName),
+    destinationLabel: label(recipientId, recipientName),
   }
 }
 
