@@ -6,7 +6,7 @@ export interface ChatbotMessageResponse {
 
 export const chatbotApi = {
   sendMessage: async (message: string): Promise<ChatbotMessageResponse> => {
-    const response = await httpClient.post('/chatbot/message', { message })
+    const response = await httpClient.post('/chatbot/query', { message })
     return response.data.data
   },
 }
