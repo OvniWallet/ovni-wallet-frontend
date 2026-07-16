@@ -26,3 +26,9 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Claude Code / Superpowers (artefactos locales del asistente, no van al remoto)
+.claude/
+.superpowers/
+CLAUDE.md
+docs/superpowers/
