@@ -27,12 +27,14 @@ export const transactionsApi = {
     limit: number;
     cursor?: string | null;
     type?: string;
+    status?: string;
   }): Promise<TransactionsPageResponse> => {
     const response = await httpClient.get<TransactionsPageResponse>('/transactions', {
       params: {
         limit: params.limit,
         cursor: params.cursor ?? undefined,
         type: params.type,
+        status: params.status,
       },
     });
     return response.data;

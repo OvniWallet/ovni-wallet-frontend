@@ -938,7 +938,7 @@
 
 @media (min-width: 700px) {
   .transactions-toolbar {
-    grid-template-columns: minmax(0, 1fr) 210px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     align-items: center;
   }
 }

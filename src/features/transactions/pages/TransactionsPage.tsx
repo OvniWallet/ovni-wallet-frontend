@@ -4,9 +4,10 @@ import { DepositForm } from '../components/DepositForm'
 import { useTransactions } from '../hooks/useTransactions'
 import { getTransactionSummary } from '../lib/transactionSummary'
 import { useWalletBalance } from '@/features/wallets/hooks/useWalletBalance'
-import type { TransactionType } from '../types'
+import type { TransactionStatus, TransactionType } from '../types'
 
 type TransactionFilter = 'ALL' | TransactionType
+type StatusFilter = 'ALL' | TransactionStatus
 type CurrencyFilter = 'ALL' | string
 
 const filters: Array<{
@@ -20,6 +21,16 @@ const filters: Array<{
   { label: 'Tarjetas', value: 'CARD_SPEND' },
 ]
 
+const statusFilters: Array<{
+  label: string
+  value: StatusFilter
+}> = [
+  { label: 'Todos los estados', value: 'ALL' },
+  { label: 'Completada', value: 'COMPLETED' },
+  { label: 'Fallida', value: 'FAILED' },
+  { label: 'Revertida', value: 'REVERSED' },
+]
+
 export function TransactionsPage() {
   const {
     transactions,
@@ -29,6 +40,8 @@ export function TransactionsPage() {
     hasPrev,
     type,
     setType,
+    status,
+    setStatus,
     nextPage,
     prevPage,
     refetch,
@@ -101,6 +114,18 @@ export function TransactionsPage() {
           <option value="ALL">Todas las monedas</option>
           {currencies.map((currencyCode) => (
             <option key={currencyCode} value={currencyCode}>{currencyCode}</option>
+          ))}
+        </select>
+
+        <select
+          aria-label="Filtrar por estado"
+          value={status}
+          onChange={(event) => setStatus(event.target.value as StatusFilter)}
+        >
+          {statusFilters.map(({ label, value }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
           ))}
         </select>
       </section>
