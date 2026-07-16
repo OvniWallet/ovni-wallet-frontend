@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MapPin } from 'lucide-react'
 import { p2pApi, type P2PCurrency } from '@/api/p2p.api'
 import { getApiError } from '@/api/errors'
 import { parseToCents, formatMoney } from '@/lib/money'
 import { useWalletBalance } from '@/features/wallets/hooks/useWalletBalance'
+import { requestGeolocation, type BrowserGeolocation } from '@/lib/geolocation'
 
 const ERROR_MESSAGES: Record<string, string> = {
   CANNOT_TRANSFER_TO_SELF: 'No puedes transferirte fondos a ti mismo.',
@@ -29,6 +31,8 @@ export function P2PPage() {
   const [currency, setCurrency] = useState<P2PCurrency>('USD')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [geolocation, setGeolocation] = useState<BrowserGeolocation | null>(null)
+  const [locatingUser, setLocatingUser] = useState(false)
 
   const { balances, loading: balancesLoading } = useWalletBalance()
 
@@ -44,6 +48,10 @@ export function P2PPage() {
     }
 
     setStep('CONFIRM')
+    setLocatingUser(true)
+    requestGeolocation()
+      .then(setGeolocation)
+      .finally(() => setLocatingUser(false))
   }
 
   const handleConfirm = async () => {
@@ -58,6 +66,8 @@ export function P2PPage() {
         recipient_email: email,
         amount_in_cents: amountInCents,
         currency,
+        latitude: geolocation?.latitude,
+        longitude: geolocation?.longitude,
       })
 
       setStep('DONE')
@@ -152,6 +162,15 @@ export function P2PPage() {
               </div>
             </dl>
 
+            <p className="transfer-geo-note">
+              <MapPin size={14} aria-hidden="true" />
+              {locatingUser
+                ? 'Solicitando tu ubicación...'
+                : geolocation
+                  ? 'Ubicación agregada a la transferencia.'
+                  : 'Se enviará sin ubicación.'}
+            </p>
+
             {error && <p role="alert">{error}</p>}
 
             <button type="button" onClick={handleConfirm} disabled={loading}>
@@ -161,7 +180,10 @@ export function P2PPage() {
             <button
               className="link-button"
               type="button"
-              onClick={() => setStep('FORM')}
+              onClick={() => {
+                setStep('FORM')
+                setGeolocation(null)
+              }}
               disabled={loading}
             >
               Editar datos

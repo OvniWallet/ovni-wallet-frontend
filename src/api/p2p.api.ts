@@ -8,6 +8,8 @@ export interface P2PTransferRequest {
   amount_in_cents: number
   currency: P2PCurrency
   idempotency_key?: string
+  latitude?: number
+  longitude?: number
 }
 
 export interface P2PTransferResponse {
