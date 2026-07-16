@@ -1,6 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { useAuth } from '../hooks/useAuth'
+
+const LOGIN_ERROR_MESSAGES: Record<number, string> = {
+  401: 'Correo o contraseña incorrectos.',
+  403: 'No tenés permisos para acceder a esta cuenta.',
+}
 
 export function LoginForm() {
   const navigate = useNavigate()
@@ -22,20 +28,45 @@ export function LoginForm() {
     try {
       await login({ email, password })
       navigate('/dashboard')
-    } catch {
-      setError('No se pudo iniciar sesión. Verifica tus datos.')
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status) {
+        setError(
+          LOGIN_ERROR_MESSAGES[err.response.status] ??
+            'No se pudo iniciar sesión. Verificá tus datos.',
+        )
+      } else {
+        setError('No se pudo iniciar sesión. Verificá tu conexión e intentá nuevamente.')
+      }
     }
   }
 
   return (
     <form className="auth-card" onSubmit={handleSubmit}>
-      <h1>Iniciar sesión</h1>
+      <div className="auth-heading">
+        <p>Bienvenido nuevamente</p>
+        <h1>Iniciar sesión</h1>
+        <span>Ingresá tus datos para acceder a tu cuenta.</span>
+      </div>
 
-      <label htmlFor="email">Email</label>
-      <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
+      <label htmlFor="email">Correo electrónico</label>
+      <input
+        id="email"
+        type="email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        placeholder="nombre@correo.com"
+        autoComplete="email"
+      />
 
       <label htmlFor="password">Contraseña</label>
-      <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Tu contraseña" />
+      <input
+        id="password"
+        type="password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        placeholder="Ingresá tu contraseña"
+        autoComplete="current-password"
+      />
 
       {error && <p role="alert">{error}</p>}
 
@@ -44,7 +75,8 @@ export function LoginForm() {
       </button>
 
       <p className="auth-link-box">
-        ¿No tienes una cuenta? <Link to="/register">Crear cuenta →</Link>
+        ¿Todavía no tenés una cuenta?
+        <Link to="/register"> Crear cuenta</Link>
       </p>
     </form>
   )

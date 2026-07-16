@@ -14,7 +14,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   access_token: string
   refresh_token: string
-  expires_in: number
+  user?: User
 }
 
 export interface RegisterRequest {
@@ -22,12 +22,12 @@ export interface RegisterRequest {
   password: string
   first_name: string
   last_name: string
-  country_of_residence: string
-
+  country_code: string 
+  timezone: string     
 }
 
 export interface RegisterResponse {
   user_id: string
   email: string
-  wallet_id: string
+  wallet_id?: string   
 }

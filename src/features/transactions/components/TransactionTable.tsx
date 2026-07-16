@@ -1,54 +1,89 @@
-import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import type { Transaction } from '../types'
-import { getLatestTransactions } from '../mocks/transactions.mock'
+import { getTransactionSummary } from '../lib/transactionSummary'
 
-// Dejamos la interfaz vacía o limpia para que no te dé errores en otros archivos que llamen a <TransactionTable />
 interface TransactionTableProps {
   transactions?: Transaction[]
+  limit?: number
+  showAllLink?: boolean
+  loading?: boolean
 }
 
-// QUITAMOS el parámetro 'transactions' que no se usaba para eliminar la advertencia de TypeScript
-export function TransactionTable({}: TransactionTableProps) {
-  // Estado local que se refrescará automáticamente leyendo los mocks dinámicos
-  const [history, setHistory] = useState<Transaction[]>(() => getLatestTransactions())
+const transactionIcons: Record<string, string> = {
+  DEPOSIT: '↓',
+  EXCHANGE: '⇄',
+  P2P_TRANSFER: '↗',
+  CARD_SPEND: '▣',
+}
 
-  useEffect(() => {
-    // Sincronización inmediata al montar la tabla
-    setHistory(getLatestTransactions())
-
-    // REFRESCO INMORTAL: Revisa el localStorage cada 1000ms (1 segundo)
-    const interval = setInterval(() => {
-      setHistory(getLatestTransactions())
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [])
+export function TransactionTable({
+  transactions = [],
+  limit,
+  showAllLink = false,
+  loading = false,
+}: TransactionTableProps) {
+  const visibleTransactions = limit ? transactions.slice(0, limit) : transactions
 
   return (
-    <section>
-      <h2>Últimos movimientos</h2>
+    <section className="transactions-section">
+      <header className="section-heading">
+        <span>
+          <p>Actividad</p>
+          <h2>Últimos movimientos</h2>
+        </span>
 
-      <div className="transaction-list">
-        {history.map((transaction) => (
-          <article className="transaction-item" key={transaction.id}>
-            <div>
-              <strong>{transaction.description}</strong>
-              <p>{transaction.type}</p>
-            </div>
+        {showAllLink && (
+          <Link className="section-link" to="/transactions">
+            Ver todos
+          </Link>
+        )}
+      </header>
 
-            <div>
-              <strong>
-                {transaction.amount.toLocaleString('es-AR', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{' '}
-                {transaction.currency}
-              </strong>
-              <p>{transaction.status}</p>
-            </div>
-          </article>
-        ))}
-      </div>
+      {loading ? (
+        <div className="transactions-loading">
+          <p>Cargando movimientos...</p>
+        </div>
+      ) : (
+        <div className="transaction-list">
+          {visibleTransactions.length === 0 ? (
+            <p className="no-transactions">No hay movimientos registrados.</p>
+          ) : (
+            visibleTransactions.map((transaction) => {
+              const summary = getTransactionSummary(transaction)
+
+              return (
+                <Link
+                  className="transaction-item"
+                  key={transaction.transaction_id}
+                  to={`/transactions/${transaction.transaction_id}`}
+                >
+                  <span className="transaction-icon" aria-hidden="true">
+                    {transactionIcons[transaction.type] ?? '•'}
+                  </span>
+
+                  <p className="transaction-info">
+                    <strong>{summary.description}</strong>
+                    <span>{transaction.type.replace(/_/g, ' ')}</span>
+                  </p>
+
+                  <p className="transaction-value">
+                    <strong>
+                      {summary.amount !== null
+                        ? `${summary.amount.toLocaleString('es-AR', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} ${summary.currency}`
+                        : '—'}
+                    </strong>
+
+                    <small>{transaction.status}</small>
+                  </p>
+                </Link>
+              )
+            })
+          )}
+        </div>
+      )}
     </section>
   )
 }

@@ -1,1 +1,3 @@
-export function generateIdempotencyKey() {}
+export function generateIdempotencyKey(): string {
+  return crypto.randomUUID()
+}
